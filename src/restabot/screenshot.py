@@ -55,10 +55,7 @@ async def parallel_process(
 
     async def process_item_with_semaphore(item):
         async with semaphore:
-            try:
-                return await afunc(item)
-            except Exception as e:
-                LOG.error(f'Error processing {item}: {e}')
+            return await afunc(item)
 
     for item in items:
         task = asyncio.create_task(process_item_with_semaphore(item))
@@ -73,6 +70,9 @@ async def screenshot_task(input: ScreenshotTaskInput):
     out_dir = input.out_dir
     if not out_dir.exists():
         out_dir.mkdir(parents=True)
+    elif not out_dir.is_dir():
+        raise ValueError(f'{out_dir} is not a directory')
+
     sites = [Restaurant.model_validate(rest_dict) for rest_dict in data['restaurants']]
 
     async def make_screenshot(site):
