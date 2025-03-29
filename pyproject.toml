@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "restabot"
+version = "0.1.0"
+description = "Restaurant menu bot"
+authors = [
+    { name = "Hufnagel Istvan", email = "pista@fnagel.hu" }
+]
+license = { text = "MIT" }
+dependencies = [
+    "playwright~=1.51.0",
+    "PyYAML~=6.0",
+    "pydantic~=2.11"
+]
