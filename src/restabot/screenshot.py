@@ -65,15 +65,15 @@ async def parallel_process(
 
 async def screenshot_task(input: ScreenshotTaskInput):
     with input.site_config_file.open('rt', encoding='utf-8') as f:
-        data = yaml.safe_load(f)
+        site_data = yaml.safe_load(f)
+
+    sites = [Restaurant.model_validate(rest_dict) for rest_dict in site_data['restaurants']]
 
     out_dir = input.out_dir
     if not out_dir.exists():
         out_dir.mkdir(parents=True)
     elif not out_dir.is_dir():
         raise ValueError(f'{out_dir} is not a directory')
-
-    sites = [Restaurant.model_validate(rest_dict) for rest_dict in data['restaurants']]
 
     async def make_screenshot(site):
         return await screenshot_site(site, out_dir=out_dir)

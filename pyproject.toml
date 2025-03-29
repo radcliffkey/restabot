@@ -9,7 +9,7 @@ description = "Restaurant menu bot"
 authors = [
     { name = "Hufnagel Istvan", email = "pista@fnagel.hu" }
 ]
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 dependencies = [
     "playwright~=1.51.0",
     "PyYAML~=6.0",
