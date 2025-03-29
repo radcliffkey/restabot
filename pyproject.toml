@@ -11,7 +11,10 @@ authors = [
 ]
 license = { file = "LICENSE" }
 dependencies = [
-    "playwright~=1.51.0",
+    "google-genai~=1.8",
+    "pillow~=11.1",
+    "playwright~=1.51",
     "PyYAML~=6.0",
-    "pydantic~=2.11"
+    "pydantic~=2.11",
+    "python-dotenv~=1.1"
 ]
