@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import logging
 import typing
 from collections.abc import Awaitable, Callable, Iterable
 from pathlib import Path
@@ -12,10 +13,12 @@ from restabot.model import Restaurant, ScreenshotTaskInput
 R = typing.TypeVar('R')
 T = typing.TypeVar('T')
 
+LOG = logging.getLogger(f'{__package__}.screenshot')
 
 async def screenshot_site(site: Restaurant, out_dir: Path):
     async with async_playwright() as pw:
-        print(f"Taking screenshot of {site.name}")
+
+        LOG.info(f'{site.id} - launching browser')
         browser = await pw.chromium.launch()
         page = await browser.new_page()
         await page.goto(site.url)
@@ -30,7 +33,7 @@ async def screenshot_site(site: Restaurant, out_dir: Path):
         for selector in cookie_accept_selectors:
             try:
                 if await page.locator(selector=selector).count() > 0:
-                    print(f'Cookie selector matched: {selector}')
+                    LOG.info(f'{site.id} - Cookie selector matched: {selector}')
                     await page.locator(selector=selector).click()
                     break
             except:
@@ -38,8 +41,7 @@ async def screenshot_site(site: Restaurant, out_dir: Path):
 
         await page.wait_for_timeout(200)
 
-        print('Page title:')
-        print(await page.title())
+        LOG.info(f'{site.id} - taking screenshot')
         await page.screenshot(path=out_dir / f'{site.id}.jpeg', full_page=True, type='jpeg', quality=80)
         await browser.close()
 
@@ -56,7 +58,7 @@ async def parallel_process(
             try:
                 return await afunc(item)
             except Exception as e:
-                print('Error', e)
+                LOG.error(f'Error processing {item}: {e}')
 
     for item in items:
         task = asyncio.create_task(process_item_with_semaphore(item))
@@ -80,6 +82,8 @@ async def screenshot_task(input: ScreenshotTaskInput):
 
 
 async def main():
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
     parser = argparse.ArgumentParser(description='Take screenshots of a webpages')
     parser.add_argument('--sites', required=True, help='Path to YAML file containing restaurant website data')
     parser.add_argument('--out-dir', required=True, help='Path to output directory')
