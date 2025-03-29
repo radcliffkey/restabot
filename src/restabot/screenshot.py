@@ -8,21 +8,22 @@ from pathlib import Path
 import yaml
 from playwright.async_api import async_playwright
 
-from restabot.model import Restaurant, ScreenshotTaskInput
+from restabot.model import ErrorResult, Restaurant, ScreenshotResult, ScreenshotTaskInput, ScreenshotTaskOutput
 
 R = typing.TypeVar('R')
 T = typing.TypeVar('T')
 
 LOG = logging.getLogger(f'{__package__}.screenshot')
 
-async def screenshot_site(site: Restaurant, out_dir: Path):
+
+async def screenshot_site(site: Restaurant, out_dir: Path) -> ScreenshotResult:
     async with async_playwright() as pw:
 
         LOG.info(f'{site.id} - launching browser')
         browser = await pw.chromium.launch()
         page = await browser.new_page()
         await page.goto(site.url)
-        await page.wait_for_timeout(200)
+        await page.wait_for_timeout(300)
 
         cookie_accept_selectors = [
             "button:has-text('Přijmout')",
@@ -42,14 +43,18 @@ async def screenshot_site(site: Restaurant, out_dir: Path):
         await page.wait_for_timeout(200)
 
         LOG.info(f'{site.id} - taking screenshot')
-        await page.screenshot(path=out_dir / f'{site.id}.jpeg', full_page=True, type='jpeg', quality=80)
+        out_file = out_dir / f'{site.id}.jpeg'
+        await page.screenshot(path=out_file, full_page=True, type='jpeg', quality=80)
         await browser.close()
+
+        return ScreenshotResult(id=site.id, path=out_file)
+
 
 async def parallel_process(
         items: Iterable[T],
         afunc: Callable[[T], Awaitable[R]],
         max_concurrency: int
-) -> list[R]:
+) -> list[R | Exception]:
     semaphore = asyncio.Semaphore(max_concurrency)
     tasks = []
 
@@ -61,9 +66,10 @@ async def parallel_process(
         task = asyncio.create_task(process_item_with_semaphore(item))
         tasks.append(task)
 
-    return await asyncio.gather(*tasks)
+    return await asyncio.gather(*tasks, return_exceptions=True)
 
-async def screenshot_task(input: ScreenshotTaskInput):
+
+async def screenshot_task(input: ScreenshotTaskInput) -> ScreenshotTaskOutput:
     with input.site_config_file.open('rt', encoding='utf-8') as f:
         site_data = yaml.safe_load(f)
 
@@ -75,10 +81,25 @@ async def screenshot_task(input: ScreenshotTaskInput):
     elif not out_dir.is_dir():
         raise ValueError(f'{out_dir} is not a directory')
 
-    async def make_screenshot(site):
-        return await screenshot_site(site, out_dir=out_dir)
+    out_dir = out_dir.resolve()
 
-    await parallel_process(sites, make_screenshot, max_concurrency=5)
+    async def make_screenshot(site):
+        try:
+            return await screenshot_site(site, out_dir=out_dir)
+        except Exception as e:
+            return ErrorResult(id=site.id, error=str(e))
+
+    results = await parallel_process(sites, make_screenshot, max_concurrency=5)
+    ok_results = []
+    err_results = []
+
+    for result in results:
+        if isinstance(result, ScreenshotResult):
+            ok_results.append(result)
+        elif isinstance(result, ErrorResult):
+            err_results.append(result)
+
+    return ScreenshotTaskOutput(results=ok_results, errors=err_results)
 
 
 async def main():
@@ -89,10 +110,12 @@ async def main():
     parser.add_argument('--out-dir', required=True, help='Path to output directory')
     args = parser.parse_args()
 
-    await screenshot_task(ScreenshotTaskInput(
+    result = await screenshot_task(ScreenshotTaskInput(
         site_config_file=Path(args.sites),
         out_dir=Path(args.out_dir)
     ))
+
+    print(result.model_dump_json(indent=2))
 
 
 if __name__ == "__main__":

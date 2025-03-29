@@ -21,10 +21,11 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
         out_dir.mkdir(parents=True)
     elif not out_dir.is_dir():
         raise ValueError(f'{out_dir} is not a directory')
+    out_dir = out_dir.resolve()
 
     LOG.warning('OCR not implemented yet')
 
-    return OcrTaskOutput(results=[])
+    return OcrTaskOutput(results=[], errors=[])
 
 
 async def main():

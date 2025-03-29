@@ -10,6 +10,11 @@ class Restaurant(BaseModel):
     url: str
 
 
+class ErrorResult(BaseModel):
+    id: str
+    error: str
+
+
 class ScreenshotTaskInput(BaseModel):
     site_config_file: Path
     out_dir: Path
@@ -22,9 +27,21 @@ class OcrTaskInput(BaseModel):
     date: datetime.date = Field(default_factory=lambda: datetime.date.today())
 
 
+class ScreenshotResult(BaseModel):
+    id: str
+    path: Path
+
+
+class ScreenshotTaskOutput(BaseModel):
+    results: list[ScreenshotResult]
+    errors: list[ErrorResult]
+
+
 class OcrResult(BaseModel):
     id: str
     data: str
 
+
 class OcrTaskOutput(BaseModel):
     results: list[OcrResult]
+    errors: list[ErrorResult]
