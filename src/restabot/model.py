@@ -40,9 +40,27 @@ class ScreenshotTaskOutput(BaseModel):
     errors: list[ErrorResult]
 
 
+class Meal(BaseModel):
+    name: str = Field(description='Name of the meal in Czech language')
+    description: str | None = Field(description='Additional information about the meal.')
+    is_vegetarian: bool
+    price: str
+
+
+class DailyMenu(BaseModel):
+    day: str = Field(description='Date or day of the week, depending on what can be extracted.')
+    meals: list[Meal] = Field(description='List of meals for the day. Leave empty if no meals were provided.')
+
+
+class ParsedMenu(BaseModel):
+    message: str = Field(description='Message summarizing if the extraction was successful.')
+    daily_menus: list[DailyMenu] = Field(
+        description='List of menus for each day. It is possible that there is only one day mentioned.')
+
+
 class OcrResult(BaseModel):
     id: str
-    data: str
+    data: ParsedMenu
 
 
 class OcrTaskOutput(BaseModel):

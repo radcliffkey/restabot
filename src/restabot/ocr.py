@@ -8,9 +8,8 @@ import PIL.Image
 import yaml
 from dotenv import load_dotenv
 from google import genai
-from pydantic import BaseModel, Field
 
-from restabot.model import OcrTaskInput, OcrTaskOutput, Restaurant
+from restabot.model import ErrorResult, OcrResult, OcrTaskInput, OcrTaskOutput, ParsedMenu, Restaurant
 
 LOG = logging.getLogger(f'{__package__}.ocr')
 
@@ -20,24 +19,6 @@ OCR_PROMPT = (
     'If the menus cannot be extracted, please respond with an error message '
     'and leave `daily_menus` field empty.'
 )
-
-
-class Meal(BaseModel):
-    name: str = Field(description='Name of the meal in Czech language')
-    description: str | None = Field(description='Additional information about the meal.')
-    is_vegetarian: bool
-    price: str
-
-
-class DailyMenu(BaseModel):
-    day: str = Field(description='Date or day of the week, depending on what can be extracted.')
-    meals: list[Meal]
-
-
-class ParsedMenu(BaseModel):
-    message: str = Field(description='Message summarizing if the extraction was successful.')
-    daily_menus: list[DailyMenu] = Field(
-        description='List of menus for each day. It is possible that there is only one day mentioned.')
 
 
 async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
@@ -53,20 +34,31 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
         raise ValueError(f'{out_dir} is not a directory')
     out_dir = out_dir.resolve()
 
-    image = PIL.Image.open(input.in_dir / f'{sites[0].id}.jpeg')
-
     client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
-    response = client.models.generate_content(
-        model='gemini-2.0-flash',
-        contents=[image, OCR_PROMPT],
-        config={
-            'response_mime_type': 'application/json',
-            'response_schema': ParsedMenu,
-        },
-    )
-    print(response.parsed.model_dump_json(indent=2))
 
-    return OcrTaskOutput(results=[], errors=[])
+    ok_results = []
+    err_results = []
+
+    for site in sites:
+        image = PIL.Image.open(input.in_dir / f'{site.id}.jpeg')
+        LOG.info(f'Running OCR for {site.id}')
+        try:
+            response = client.models.generate_content(
+                model='gemini-2.0-flash',
+                contents=[image, OCR_PROMPT],
+                config={
+                    'response_mime_type': 'application/json',
+                    'response_schema': ParsedMenu,
+                },
+            )
+            assert isinstance(response.parsed, ParsedMenu)
+            ok_results.append(OcrResult(id=site.id, data=response.parsed))
+        except Exception as e:
+            LOG.error(f'Failed to extract menu for {site.id}: {e}')
+            err_results.append(ErrorResult(id=site.id, error=str(e)))
+            continue
+
+    return OcrTaskOutput(results=ok_results, errors=err_results)
 
 
 async def main():
@@ -79,12 +71,16 @@ async def main():
     args = parser.parse_args()
 
     load_dotenv()
+    if not os.getenv('GEMINI_API_KEY'):
+        raise ValueError('GEMINI_API_KEY is not set')
 
-    await ocr_task(OcrTaskInput(
+    result = await ocr_task(OcrTaskInput(
         site_config_file=Path(args.sites),
         in_dir=Path(args.in_dir),
         out_dir=Path(args.out_dir)
     ))
+
+    print(result.model_dump_json(indent=2))
 
 
 if __name__ == "__main__":
