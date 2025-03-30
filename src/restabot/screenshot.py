@@ -4,6 +4,7 @@ import logging
 import typing
 from collections.abc import Awaitable, Callable, Iterable
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from playwright.async_api import async_playwright
@@ -16,7 +17,12 @@ T = typing.TypeVar('T')
 LOG = logging.getLogger(f'{__package__}.screenshot')
 
 
-async def screenshot_site(site: Restaurant, out_dir: Path) -> ScreenshotResult:
+async def screenshot_site(
+        site: Restaurant,
+        out_dir: Path,
+        format: Literal['jpeg', 'png'] | None = None,
+        quality: int | None = None
+) -> ScreenshotResult:
     async with async_playwright() as pw:
 
         LOG.info(f'{site.id} - launching browser')
@@ -43,8 +49,8 @@ async def screenshot_site(site: Restaurant, out_dir: Path) -> ScreenshotResult:
         await page.wait_for_timeout(200)
 
         LOG.info(f'{site.id} - taking screenshot')
-        out_file = out_dir / f'{site.id}.jpeg'
-        await page.screenshot(path=out_file, full_page=True, type='jpeg', quality=80)
+        out_file = out_dir / f'{site.id}.{format}'
+        await page.screenshot(path=out_file, full_page=True, type=format, quality=quality)
         await browser.close()
 
         return ScreenshotResult(id=site.id, path=out_file)
@@ -70,6 +76,8 @@ async def parallel_process(
 
 
 async def screenshot_task(input: ScreenshotTaskInput) -> ScreenshotTaskOutput:
+    LOG.info(f'Running screenshot task with {input.model_dump()}')
+
     with input.site_config_file.open('rt', encoding='utf-8') as f:
         site_data = yaml.safe_load(f)
 
@@ -85,7 +93,7 @@ async def screenshot_task(input: ScreenshotTaskInput) -> ScreenshotTaskOutput:
 
     async def make_screenshot(site):
         try:
-            return await screenshot_site(site, out_dir=out_dir)
+            return await screenshot_site(site, out_dir=out_dir, format=input.format, quality=input.quality)
         except Exception as e:
             return ErrorResult(id=site.id, error=str(e))
 
@@ -108,11 +116,19 @@ async def main():
     parser = argparse.ArgumentParser(description='Take screenshots of a webpages')
     parser.add_argument('--sites', required=True, help='Path to YAML file containing restaurant website data')
     parser.add_argument('--out-dir', required=True, help='Path to output directory')
+    parser.add_argument('--out-format', choices=['jpeg', 'png'], default='png', help='Format of the output image')
+    parser.add_argument(
+        '--jpeg-quality', type=int,
+        help='Quality of the output image (1-100). Applied only if out-format is jpeg'
+    )
+
     args = parser.parse_args()
 
     result = await screenshot_task(ScreenshotTaskInput(
         site_config_file=Path(args.sites),
-        out_dir=Path(args.out_dir)
+        out_dir=Path(args.out_dir),
+        format=args.out_format,
+        quality=args.jpeg_quality
     ))
 
     print(result.model_dump_json(indent=2))

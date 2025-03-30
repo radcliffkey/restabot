@@ -1,5 +1,6 @@
 import datetime
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -18,6 +19,8 @@ class ErrorResult(BaseModel):
 class ScreenshotTaskInput(BaseModel):
     site_config_file: Path
     out_dir: Path
+    format: Literal['jpeg', 'png']
+    quality: int | None = None
 
 
 class OcrTaskInput(BaseModel):
