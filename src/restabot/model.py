@@ -43,13 +43,15 @@ class ScreenshotTaskOutput(BaseModel):
 class Meal(BaseModel):
     name: str = Field(description='Name of the meal in Czech language')
     description: str | None = Field(description='Additional information about the meal.')
-    is_vegetarian: bool
+    is_vegetarian: bool = Field(description='Indicates if the meal is vegetarian. (Cheese is vegetarian.)')
     price: str
 
 
 class DailyMenu(BaseModel):
     day: str = Field(description='Date or day of the week, depending on what can be extracted.')
-    meals: list[Meal] = Field(description='List of meals for the day. Leave empty if no meals were provided.')
+    meals: list[Meal] = Field(
+        description='List of meals for the day. Leave empty if no meals were provided. Do not include drinks.'
+    )
 
 
 class ParsedMenu(BaseModel):
