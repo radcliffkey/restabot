@@ -16,12 +16,19 @@ LOG = logging.getLogger(f'{__package__}.summary')
 
 
 SUMMARY_PROMPT_TMPL = (
-    'Analyze the following restaurant menus and create a listing. Select only menus for {date} ({day_of_week}). '
-    'Do not omit any meals, but correct spelling and duplicates. '
-    'The listing should be concise but informative, written in Czech language. '
-    'Use Markdown format, headings, bullet points, etc. '
-    'The input is in JSON format and was automatically extracted, it can contain errors.\n\n'
-    'Restaurant menus:\n\n{menus}'
+    'Please analyze the following restaurant menus and create a listing.'
+    '- Select only menus for {date} ({day_of_week}). If the menu applies to the whole current week, include it.\n'
+    '- Create a listing written in Czech language\n'
+    '- Do not omit any meals, but correct spelling and duplicates\n'
+    '- Arrange the information in common format:'
+    ' <meal name and description, capitalized but not all caps> – <price> Kč. Omit the price if it is unknown.\n'
+    '- Prefix vegetarian dishes with 🌿 emoji.\n'
+    '- Prefix non-vegetarian dishes with a suitable emoji for given dish. Be creative!\n'
+    '- Use Markdown format: headings, bullet points, etc.\n'
+    'Use `thinking` field for planning your next steps and reasoning. '
+    'The input is in JSON format and was automatically extracted by OCR; it can contain errors.\n\n'
+    'Restaurant menus:\n\n'
+    '{menus}'
 )
 
 
@@ -32,15 +39,12 @@ def get_summary_prompt(date: datetime.date, menus: list[dict]) -> str:
 
 
 async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
-    # Load restaurant data
     with input.site_config_file.open('rt', encoding='utf-8') as f:
         site_data = yaml.safe_load(f)
     restaurants = {r['id']: Restaurant.model_validate(r) for r in site_data['restaurants']}
 
-    # Load OCR results
     ocr_output = OcrTaskOutput.model_validate_json(input.ocr_output_file.read_text(encoding='utf-8'))
 
-    # Prepare menus for analysis
     menus = []
     for result in ocr_output.results:
         restaurant = restaurants[result.id]
@@ -51,11 +55,10 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
 
     if not menus:
         return SummaryTaskOutput(
-            summary=DailySummary(text='No menus available for analysis.'),
+            summary=DailySummary(text='No menus available for analysis.', thinking=''),
             date=ocr_output.date
         )
 
-    # Generate summary using Gemini
     client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
     prompt = get_summary_prompt(ocr_output.date, menus)
 
@@ -66,6 +69,7 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
             config={
                 'response_mime_type': 'application/json',
                 'response_schema': DailySummary,
+                'temperature': 0.0
             },
         )
         assert isinstance(response.parsed, DailySummary)
@@ -73,7 +77,7 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
     except Exception as e:
         LOG.error(f'Failed to generate summary: {e}')
         return SummaryTaskOutput(
-            summary=DailySummary(text=f'Error generating summary: {str(e)}'),
+            summary=DailySummary(text=f'Error generating summary: {str(e)}', thinking=''),
             date=ocr_output.date
         )
 
@@ -97,6 +101,7 @@ async def main():
     ))
 
     out_file = Path(args.out_file).resolve()
+    LOG.info(f'Thinking:\n{result.summary.thinking}')
     LOG.info(f'Writing output to {out_file}')
     Path(out_file).write_text(result.summary.text, encoding='utf-8')
 

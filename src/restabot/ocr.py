@@ -50,6 +50,7 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
                 config={
                     'response_mime_type': 'application/json',
                     'response_schema': ParsedMenu,
+                    'temperature': 0.0
                 },
             )
             assert isinstance(response.parsed, ParsedMenu)

@@ -84,7 +84,8 @@ class SummaryTaskInput(BaseModel):
 
 
 class DailySummary(BaseModel):
-    text: str = Field(description='Listing of the dayily menus in Czech language. Use concise Markdown format.')
+    thinking: str = Field(description='Plan steps to achieve the goal according to the instructions.')
+    text: str = Field(description='Listing of the daily menus in Czech language. Use concise Markdown format.')
 
 
 class SummaryTaskOutput(BaseModel):
