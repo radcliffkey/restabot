@@ -49,11 +49,12 @@ class Meal(BaseModel):
 
 class DailyMenu(BaseModel):
     day: str = Field(
-        description='depending on menu type, it can be\n'
+        description='depending on menu type, this field will contain one of the following:\n'
                     '- date (DD.MM.)\n'
                     '- day of week\n'
                     '- date range (DD.MM. - DD.MM.) if the menu is weekly\n'
-                    '- "whole week" if the menu is weekly and the date range is not available'
+                    '- "whole week" if the menu is weekly and the date range is not available\n\n'
+                    'Do not include time.'
     )
     meals: list[Meal] = Field(
         description='List of meals for the day. Leave empty if no meals were provided. Do not include drinks.'
@@ -74,3 +75,18 @@ class OcrResult(BaseModel):
 class OcrTaskOutput(BaseModel):
     results: list[OcrResult]
     errors: list[ErrorResult]
+    date: datetime.date
+
+
+class SummaryTaskInput(BaseModel):
+    site_config_file: Path
+    ocr_output_file: Path
+
+
+class DailySummary(BaseModel):
+    text: str = Field(description='Listing of the dayily menus in Czech language. Use concise Markdown format.')
+
+
+class SummaryTaskOutput(BaseModel):
+    summary: DailySummary
+    date: datetime.date

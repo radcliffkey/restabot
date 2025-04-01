@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import datetime
 import logging
 import os
 from pathlib import Path
@@ -14,11 +15,16 @@ from restabot.model import ErrorResult, OcrResult, OcrTaskInput, OcrTaskOutput, 
 LOG = logging.getLogger(f'{__package__}.ocr')
 
 
-OCR_PROMPT = (
+OCR_PROMPT_TMPL = (
     'Extract daily menus from the image. The text is in Czech language. '
     'If the menus cannot be extracted, please respond with an error message '
-    'and leave `daily_menus` field empty.'
+    'and leave `daily_menus` field empty. '
+    'Today is {date}.'
 )
+
+
+def get_ocr_prompt(date: datetime.date) -> str:
+    return OCR_PROMPT_TMPL.format(date=date.isoformat())
 
 
 async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
@@ -32,13 +38,15 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
     ok_results = []
     err_results = []
 
+    prompt = get_ocr_prompt(input.date)
+
     for site in sites:
         image = PIL.Image.open(input.in_dir / f'{site.id}.jpeg')
         LOG.info(f'Running OCR for {site.id}')
         try:
             response = client.models.generate_content(
                 model='gemini-2.0-flash',
-                contents=[image, OCR_PROMPT],
+                contents=[image, prompt],
                 config={
                     'response_mime_type': 'application/json',
                     'response_schema': ParsedMenu,
@@ -51,7 +59,7 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
             err_results.append(ErrorResult(id=site.id, error=str(e)))
             continue
 
-    return OcrTaskOutput(results=ok_results, errors=err_results)
+    return OcrTaskOutput(results=ok_results, errors=err_results, date=input.date)
 
 
 async def main():
