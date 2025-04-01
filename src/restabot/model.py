@@ -26,7 +26,6 @@ class ScreenshotTaskInput(BaseModel):
 class OcrTaskInput(BaseModel):
     site_config_file: Path
     in_dir: Path
-    out_dir: Path
     date: datetime.date = Field(default_factory=lambda: datetime.date.today())
 
 
@@ -42,13 +41,20 @@ class ScreenshotTaskOutput(BaseModel):
 
 class Meal(BaseModel):
     name: str = Field(description='Name of the meal in Czech language')
-    description: str | None = Field(description='Additional information about the meal.')
+    description: str | None = Field(
+        description='Additional information about the meal. Usually contains ingredients, English translation etc.')
     is_vegetarian: bool = Field(description='Indicates if the meal is vegetarian. (Cheese is vegetarian.)')
     price: str
 
 
 class DailyMenu(BaseModel):
-    day: str = Field(description='Date or day of the week, depending on what can be extracted.')
+    day: str = Field(
+        description='depending on menu type, it can be\n'
+                    '- date (DD.MM.)\n'
+                    '- day of week\n'
+                    '- date range (DD.MM. - DD.MM.) if the menu is weekly\n'
+                    '- "whole week" if the menu is weekly and the date range is not available'
+    )
     meals: list[Meal] = Field(
         description='List of meals for the day. Leave empty if no meals were provided. Do not include drinks.'
     )

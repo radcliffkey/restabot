@@ -27,13 +27,6 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
 
     sites = [Restaurant.model_validate(rest_dict) for rest_dict in site_data['restaurants']]
 
-    out_dir = input.out_dir
-    if not out_dir.exists():
-        out_dir.mkdir(parents=True)
-    elif not out_dir.is_dir():
-        raise ValueError(f'{out_dir} is not a directory')
-    out_dir = out_dir.resolve()
-
     client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
 
     ok_results = []
@@ -67,7 +60,7 @@ async def main():
     parser = argparse.ArgumentParser(description='Parse screenshots of webpages')
     parser.add_argument('--sites', required=True, help='Path to YAML file containing restaurant website data')
     parser.add_argument('--in-dir', required=True, help='Path to input directory')
-    parser.add_argument('--out-dir', required=True, help='Path to output directory')
+    parser.add_argument('--out-file', required=True, help='Path to output file')
     args = parser.parse_args()
 
     load_dotenv()
@@ -76,11 +69,12 @@ async def main():
 
     result = await ocr_task(OcrTaskInput(
         site_config_file=Path(args.sites),
-        in_dir=Path(args.in_dir),
-        out_dir=Path(args.out_dir)
+        in_dir=Path(args.in_dir)
     ))
 
-    print(result.model_dump_json(indent=2))
+    out_file = Path(args.out_file).resolve()
+    LOG.info(f'Writing output to {out_file}')
+    Path(out_file).write_text(result.model_dump_json(indent=2), encoding='utf-8')
 
 
 if __name__ == "__main__":
