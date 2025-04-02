@@ -39,12 +39,12 @@ class ScreenshotTaskOutput(BaseModel):
     errors: list[ErrorResult]
 
 
-class Meal(BaseModel):
-    name: str = Field(description='Name of the meal in Czech language')
+class Dish(BaseModel):
+    name: str = Field(description='Name of the dish in Czech language')
     description: str | None = Field(
-        description='Additional information about the meal. Usually contains ingredients, English translation etc.')
-    is_vegetarian: bool = Field(description='Indicates if the meal is vegetarian. (Cheese is vegetarian.)')
-    price: str
+        description='Additional information about the dish. Usually contains ingredients, English translation etc.')
+    is_vegetarian: bool = Field(description='Indicates if the dish is vegetarian. (Cheese is vegetarian.)')
+    price: int | None = Field(description='Price of the dish in local currency.')
 
 
 class DailyMenu(BaseModel):
@@ -56,8 +56,8 @@ class DailyMenu(BaseModel):
                     '- "whole week" if the menu is weekly and the date range is not available\n\n'
                     'Do not include time.'
     )
-    meals: list[Meal] = Field(
-        description='List of meals for the day. Leave empty if no meals were provided. Do not include drinks.'
+    dishes: list[Dish] = Field(
+        description='List of dishes for the day. Leave empty if no dishes were provided. Do not include drinks.'
     )
 
 

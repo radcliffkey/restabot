@@ -9,6 +9,7 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 from google import genai
+from google.genai.types import GenerateContentConfig
 
 from restabot.model import DailySummary, OcrTaskOutput, Restaurant, SummaryTaskInput, SummaryTaskOutput
 
@@ -19,13 +20,13 @@ SUMMARY_PROMPT_TMPL = (
     'Please analyze the following restaurant menus and create a listing.'
     '- Select only menus for {date} ({day_of_week}). If the menu applies to the whole current week, include it.\n'
     '- Create a listing written in Czech language\n'
-    '- Do not omit any meals, but correct spelling and duplicates\n'
+    '- Do not omit any dishes, but correct spelling and duplicates\n'
     '- Arrange the information in common format:'
-    ' <meal name and description, capitalized but not all caps> – <price> Kč. Omit the price if it is unknown.\n'
+    ' <dish name and description, capitalized but not all caps> – <price> Kč. Omit the price if it is unknown.\n'
     '- Prefix vegetarian dishes with 🌿 emoji.\n'
     '- Prefix non-vegetarian dishes with a suitable emoji for given dish. Be creative!\n'
     '- Use Markdown format: headings, bullet points, etc.\n'
-    'Use `thinking` field for planning your next steps and reasoning. '
+    'Use `thinking` field for planning and step-by-step reasoning. '
     'The input is in JSON format and was automatically extracted by OCR; it can contain errors.\n\n'
     'Restaurant menus:\n\n'
     '{menus}'
@@ -64,18 +65,21 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
 
     try:
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-2.5-pro-exp-03-25',
             contents=prompt,
-            config={
-                'response_mime_type': 'application/json',
-                'response_schema': DailySummary,
-                'temperature': 0.0
-            },
+            config=GenerateContentConfig(
+                response_mime_type='application/json',
+                response_schema=DailySummary,
+                temperature=0.0
+            ),
         )
-        assert isinstance(response.parsed, DailySummary)
+        if not isinstance(response.parsed, DailySummary):
+            LOG.error(f'Unexpected response type: {type(response.parsed)}, response: {response.model_dump_json()}')
+            raise ValueError('Unexpected response type')
+
         return SummaryTaskOutput(summary=response.parsed, date=ocr_output.date)
     except Exception as e:
-        LOG.error(f'Failed to generate summary: {e}')
+        LOG.error(f'Failed to generate summary: {e}', exc_info=True)
         return SummaryTaskOutput(
             summary=DailySummary(text=f'Error generating summary: {str(e)}', thinking=''),
             date=ocr_output.date

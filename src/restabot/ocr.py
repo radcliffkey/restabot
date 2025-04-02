@@ -9,6 +9,7 @@ import PIL.Image
 import yaml
 from dotenv import load_dotenv
 from google import genai
+from google.genai.types import GenerateContentConfig
 
 from restabot.model import ErrorResult, OcrResult, OcrTaskInput, OcrTaskOutput, ParsedMenu, Restaurant
 
@@ -47,11 +48,11 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
             response = client.models.generate_content(
                 model='gemini-2.0-flash',
                 contents=[image, prompt],
-                config={
-                    'response_mime_type': 'application/json',
-                    'response_schema': ParsedMenu,
-                    'temperature': 0.0
-                },
+                config=GenerateContentConfig(
+                    response_mime_type='application/json',
+                    response_schema=ParsedMenu,
+                    temperature=0.0
+                ),
             )
             assert isinstance(response.parsed, ParsedMenu)
             ok_results.append(OcrResult(id=site.id, data=response.parsed))
