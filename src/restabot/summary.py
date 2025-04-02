@@ -13,8 +13,11 @@ from google.genai.types import GenerateContentConfig
 
 from restabot.model import DailySummary, OcrTaskOutput, Restaurant, SummaryTaskInput, SummaryTaskOutput
 
+
 LOG = logging.getLogger(f'{__package__}.summary')
 
+# MODEL = 'gemini-2.5-pro-exp-03-25'
+MODEL = 'gemini-2.0-flash'
 
 SUMMARY_PROMPT_TMPL = (
     'Please analyze the following restaurant menus and create a listing.'
@@ -26,7 +29,7 @@ SUMMARY_PROMPT_TMPL = (
     '- Prefix vegetarian dishes with 🌿 emoji.\n'
     '- Prefix non-vegetarian dishes with a suitable emoji for given dish. Be creative!\n'
     '- Use Markdown format: headings, bullet points, etc.\n'
-    'Use `thinking` field for planning and step-by-step reasoning. '
+    'Use `reasoning` field for planning and step-by-step reasoning. '
     'The input is in JSON format and was automatically extracted by OCR; it can contain errors.\n\n'
     'Restaurant menus:\n\n'
     '{menus}'
@@ -56,7 +59,7 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
 
     if not menus:
         return SummaryTaskOutput(
-            summary=DailySummary(text='No menus available for analysis.', thinking=''),
+            summary=DailySummary(text='No menus available for analysis.', reasoning=''),
             date=ocr_output.date
         )
 
@@ -65,7 +68,7 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
 
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-pro-exp-03-25',
+            model=MODEL,
             contents=prompt,
             config=GenerateContentConfig(
                 response_mime_type='application/json',
@@ -81,7 +84,7 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
     except Exception as e:
         LOG.error(f'Failed to generate summary: {e}', exc_info=True)
         return SummaryTaskOutput(
-            summary=DailySummary(text=f'Error generating summary: {str(e)}', thinking=''),
+            summary=DailySummary(text=f'Error generating summary: {str(e)}', reasoning=''),
             date=ocr_output.date
         )
 
@@ -105,7 +108,7 @@ async def main():
     ))
 
     out_file = Path(args.out_file).resolve()
-    LOG.info(f'Thinking:\n{result.summary.thinking}')
+    LOG.info(f'Thinking:\n{result.summary.reasoning}')
     LOG.info(f'Writing output to {out_file}')
     Path(out_file).write_text(result.summary.text, encoding='utf-8')
 

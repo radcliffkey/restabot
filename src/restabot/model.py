@@ -42,7 +42,8 @@ class ScreenshotTaskOutput(BaseModel):
 class Dish(BaseModel):
     name: str = Field(description='Name of the dish in Czech language')
     description: str | None = Field(
-        description='Additional information about the dish. Usually contains ingredients, English translation etc.')
+        description='Additional information about the dish (written in Czech or English).'
+                    'Usually contains ingredients, English translation etc.')
     is_vegetarian: bool = Field(description='Indicates if the dish is vegetarian. (Cheese is vegetarian.)')
     price: int | None = Field(description='Price of the dish in local currency.')
 
@@ -84,7 +85,7 @@ class SummaryTaskInput(BaseModel):
 
 
 class DailySummary(BaseModel):
-    thinking: str = Field(description='Plan steps to achieve the goal according to the instructions.')
+    reasoning: str = Field(description='Step-by-step planning and reasoning.')
     text: str = Field(description='Listing of the daily menus in Czech language. Use concise Markdown format.')
 
 
