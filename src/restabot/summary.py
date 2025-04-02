@@ -1,7 +1,6 @@
 import argparse
 import asyncio
 import datetime
-import json
 import logging
 import os
 from pathlib import Path
@@ -12,7 +11,6 @@ from google import genai
 from google.genai.types import GenerateContentConfig
 
 from restabot.model import DailySummary, OcrTaskOutput, Restaurant, SummaryTaskInput, SummaryTaskOutput
-
 
 LOG = logging.getLogger(f'{__package__}.summary')
 
@@ -30,7 +28,7 @@ SUMMARY_PROMPT_TMPL = (
     '- Prefix non-vegetarian dishes with a suitable emoji for given dish. Be creative!\n'
     '- Use Markdown format: headings, bullet points, etc.\n'
     'Use `reasoning` field for planning and step-by-step reasoning. '
-    'The input is in JSON format and was automatically extracted by OCR; it can contain errors.\n\n'
+    'The input is in YAML format and was automatically extracted by OCR; it can contain errors.\n\n'
     'Restaurant menus:\n\n'
     '{menus}'
 )
@@ -38,7 +36,8 @@ SUMMARY_PROMPT_TMPL = (
 
 def get_summary_prompt(date: datetime.date, menus: list[dict]) -> str:
     day_of_week = date.strftime('%A')  # Get full day name in English
-    menus_text = '\n\n'.join(json.dumps(menu, indent=2, ensure_ascii=False) for menu in menus)
+
+    menus_text = '\n\n'.join(yaml.dump(menu, indent=2, allow_unicode=True, sort_keys=False) for menu in menus)
     return SUMMARY_PROMPT_TMPL.format(date=date.isoformat(), day_of_week=day_of_week, menus=menus_text)
 
 
