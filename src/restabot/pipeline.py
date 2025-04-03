@@ -8,9 +8,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from restabot.model import OcrTaskInput, ScreenshotTaskInput, SummaryTaskInput
-from restabot.ocr import ocr_task
-from restabot.screenshot import screenshot_task
-from restabot.summary import summary_task
+from restabot.task.ocr import ocr_task
+from restabot.task.screenshot import screenshot_task
+from restabot.task.summary import summary_task
 
 LOG = logging.getLogger(f'{__package__}.pipeline')
 
