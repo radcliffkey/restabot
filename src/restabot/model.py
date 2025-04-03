@@ -92,3 +92,13 @@ class DailySummary(BaseModel):
 class SummaryTaskOutput(BaseModel):
     summary: DailySummary
     date: datetime.date
+
+
+class SlackUploadTaskInput(BaseModel):
+    site_config_file: Path
+    channel_id: str
+    summary_file: Path
+
+
+class SlackUploadTaskOutput(BaseModel):
+    error: str | None = Field(description='Error message if the upload failed.')
