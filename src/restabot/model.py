@@ -38,6 +38,13 @@ class ScreenshotTaskOutput(BaseModel):
     results: list[ScreenshotResult]
     errors: list[ErrorResult]
 
+class SlackDownloadTaskInput(BaseModel):
+    site_config_file: Path
+    out_dir: Path
+
+
+SlackDownloadTaskOutput = ScreenshotTaskOutput
+
 
 class Dish(BaseModel):
     name: str = Field(description='Name of the dish in Czech language')

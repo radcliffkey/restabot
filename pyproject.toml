@@ -13,6 +13,7 @@ readme = {file = "README.md", content-type = "text/markdown"}
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
 dependencies = [
+    "aiohttp~=3.11",
     "google-genai~=1.8",
     "pillow~=11.1",
     "playwright~=1.51",

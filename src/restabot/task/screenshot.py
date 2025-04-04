@@ -82,6 +82,7 @@ async def screenshot_task(input: ScreenshotTaskInput) -> ScreenshotTaskOutput:
         site_data = yaml.safe_load(f)
 
     sites = [Restaurant.model_validate(rest_dict) for rest_dict in site_data['restaurants']]
+    sites = [r for r in sites if r.url.startswith('http')]
 
     out_dir = input.out_dir
     if not out_dir.exists():

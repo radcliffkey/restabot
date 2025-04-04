@@ -45,7 +45,7 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
         image = PIL.Image.open(input.in_dir / f'{site.id}.jpeg')
         LOG.info(f'Running OCR for {site.id}')
         try:
-            response = client.models.generate_content(
+            response = await client.aio.models.generate_content(
                 model='gemini-2.0-flash',
                 contents=[image, prompt],
                 config=GenerateContentConfig(
@@ -57,7 +57,7 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
             assert isinstance(response.parsed, ParsedMenu)
             ok_results.append(OcrResult(id=site.id, data=response.parsed))
         except Exception as e:
-            LOG.error(f'Failed to extract menu for {site.id}: {e}')
+            LOG.error(f'Failed to extract menu for {site.id}: {type(e)}:{e}')
             err_results.append(ErrorResult(id=site.id, error=str(e)))
             continue
 

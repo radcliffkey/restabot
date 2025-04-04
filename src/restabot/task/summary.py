@@ -66,7 +66,7 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
     prompt = get_summary_prompt(ocr_output.date, menus)
 
     try:
-        response = client.models.generate_content(
+        response = await client.aio.models.generate_content(
             model=MODEL,
             contents=prompt,
             config=GenerateContentConfig(

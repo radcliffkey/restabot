@@ -6,8 +6,8 @@ from pathlib import Path
 
 import yaml
 from dotenv import load_dotenv
-from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
+from slack_sdk.web.async_client import AsyncWebClient
 
 from restabot.model import SlackUploadTaskInput, SlackUploadTaskOutput
 
@@ -20,10 +20,10 @@ async def slack_upload_task(input: SlackUploadTaskInput) -> SlackUploadTaskOutpu
 
     summary_text = input.summary_file.read_text(encoding='utf-8')
 
-    client = WebClient(token=os.getenv('SLACK_BOT_TOKEN'))
+    client = AsyncWebClient(token=os.getenv('SLACK_BOT_TOKEN'))
 
     try:
-        client.chat_postMessage(
+        await client.chat_postMessage(
             channel=input.channel_id,
             text=summary_text,
             blocks=[
