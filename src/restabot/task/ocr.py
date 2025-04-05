@@ -17,8 +17,9 @@ LOG = logging.getLogger(f'{__package__}.ocr')
 
 
 OCR_PROMPT_TMPL = (
-    'Extract restaurant daily menus from the image. The text is in Czech or English language. '
+    'Extract restaurant daily menus from the image. The texts are in Czech or English language. '
     'The input is either a screenshot of a webpage or a photo of a handwritten menu; it can contain spelling errors. '
+    'Ignore any text not related to the menu. Ignore take-out and delivery menus. '
     'If the menus cannot be extracted, leave `daily_menus` field empty. '
 )
 

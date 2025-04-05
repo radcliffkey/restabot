@@ -63,14 +63,21 @@ class DateRange(BaseModel):
     start: SimpleDate
     end: SimpleDate
 
-DayOfWeek = Literal['pondělí', 'úterý', 'strěda', 'čtvrtek', 'pátek', 'sobota', 'neděle']
+
+class DayOfWeek(BaseModel):
+    name: Literal['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] = Field(
+        description='Name of the day in English.'
+    )
+
 
 class DailyMenu(BaseModel):
-    day: Union[SimpleDate, DateRange, DayOfWeek, Literal['whole_week']] = Field(
-        description='depending on menu type, this field will contain one of the following:\n'
-                    '- date\n'
-                    '- day of week\n'
+    valid_for_text: str = Field(description='Time period for which the menu is valid as extracted from input text.')
+    valid_for: Union[SimpleDate, DateRange, DayOfWeek, Literal['whole_week']] = Field(
+        description='Time period for which the menu is valid. Depending on input text and menu type, '
+                    'this field will contain one of the following:\n'
+                    '- date; parse `XX.YY` as `XX` = day and `YY` = month\n'
                     '- date range if the menu is weekly\n'
+                    '- day of week\n'
                     '- "whole_week" if the menu is weekly and the date range is not available'
     )
     dishes: list[Dish] = Field(
