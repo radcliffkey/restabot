@@ -3,7 +3,6 @@ import asyncio
 import datetime
 import logging
 import os
-
 from pathlib import Path
 
 import aiohttp
@@ -15,6 +14,16 @@ from slack_sdk.web.async_client import AsyncWebClient
 from restabot.model import ErrorResult, Restaurant, ScreenshotResult, SlackDownloadTaskInput, SlackDownloadTaskOutput
 
 LOG = logging.getLogger(f'{__package__}.slack_download')
+
+
+async def _download_file(url: str, out_file: Path) -> None:
+    headers = {'Authorization': f'Bearer {os.getenv("SLACK_BOT_TOKEN")}'}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as file_response:
+            file_response.raise_for_status()
+            with open(out_file, 'wb') as f:
+                async for chunk in file_response.content.iter_chunked(8192):
+                    f.write(chunk)
 
 
 async def slack_download_task(input: SlackDownloadTaskInput) -> SlackDownloadTaskOutput:
@@ -53,23 +62,22 @@ async def slack_download_task(input: SlackDownloadTaskInput) -> SlackDownloadTas
 
             file_msgs = [msg for msg in resp['messages'] if 'files' in msg]
             last_msg = max(file_msgs, key=lambda msg: msg['ts'])
-            download_url = last_msg['files'][0]['url_private_download']
-            out_file = out_dir / f'{site.id}.{download_url.split('.')[-1]}'
 
-            LOG.info('Downloading file from channel {channel_id}')
-            headers = {'Authorization': f'Bearer {os.getenv("SLACK_BOT_TOKEN")}'}
-            async with aiohttp.ClientSession() as session:
-                async with session.get(download_url, headers=headers) as file_response:
-                    if file_response.status == 200:
-                        with open(out_file, 'wb') as f:
-                            async for chunk in file_response.content.iter_chunked(8192):
-                                f.write(chunk)
-                        LOG.info(f"Successfully downloaded a photo to '{out_file}'")
-                        ok_results.append(ScreenshotResult(id=site.id, path=out_file))
-                    else:
-                        error_msg = f'Failed to download photo. Status code: {file_response.status}'
-                        LOG.error(error_msg)
-                        err_results.append(ErrorResult(id=site.id, error=error_msg))
+            download_url = last_msg['files'][0]['url_private_download']
+            ext = download_url.split('.')[-1]
+            if ext == 'jpg':
+                ext = 'jpeg'
+            out_file = out_dir / f'{site.id}.{ext}'
+
+            try:
+                await _download_file(download_url, out_file)
+                LOG.info(f"Successfully downloaded a photo to '{out_file}'")
+                ok_results.append(ScreenshotResult(id=site.id, path=out_file))
+            except Exception as e:
+                error_msg = f'Failed to download last image: {str(e)}'
+                LOG.error(error_msg)
+                err_results.append(ErrorResult(id=site.id, error=error_msg))
+                continue
 
         except SlackApiError as e:
             LOG.error(f'Failed to download last image from Slack channel {channel_id}: {e.response["error"]}')

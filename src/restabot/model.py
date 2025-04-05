@@ -1,6 +1,6 @@
 import datetime
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Union
 
 from pydantic import BaseModel, Field
 
@@ -55,22 +55,33 @@ class Dish(BaseModel):
     price: int | None = Field(description='Price of the dish in local currency.')
 
 
+class SimpleDate(BaseModel):
+    day: int
+    month: int
+
+class DateRange(BaseModel):
+    start: SimpleDate
+    end: SimpleDate
+
+DayOfWeek = Literal['pondělí', 'úterý', 'strěda', 'čtvrtek', 'pátek', 'sobota', 'neděle']
+
 class DailyMenu(BaseModel):
-    day: str = Field(
+    day: Union[SimpleDate, DateRange, DayOfWeek, Literal['whole_week']] = Field(
         description='depending on menu type, this field will contain one of the following:\n'
-                    '- date (DD.MM.)\n'
+                    '- date\n'
                     '- day of week\n'
-                    '- date range (DD.MM. - DD.MM.) if the menu is weekly\n'
-                    '- "whole week" if the menu is weekly and the date range is not available\n\n'
-                    'Do not include time.'
+                    '- date range if the menu is weekly\n'
+                    '- "whole_week" if the menu is weekly and the date range is not available'
     )
     dishes: list[Dish] = Field(
-        description='List of dishes for the day. Leave empty if no dishes were provided. Do not include drinks.'
+        description='List of dishes for the day/week. Leave empty if no dishes were provided. Do not include drinks.'
     )
 
 
 class ParsedMenu(BaseModel):
-    message: str = Field(description='Message summarizing if the extraction was successful.')
+    languages: list[str] = Field(
+        description='List of languages detected in the text. Most likely languages are Czech and English. '
+                    'Take the language into account when parsing the text.')
     daily_menus: list[DailyMenu] = Field(
         description='List of menus for each day. It is possible that there is only one day mentioned.')
 

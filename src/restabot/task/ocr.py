@@ -17,10 +17,9 @@ LOG = logging.getLogger(f'{__package__}.ocr')
 
 
 OCR_PROMPT_TMPL = (
-    'Extract daily menus from the image. The text is in Czech language. '
-    'If the menus cannot be extracted, please respond with an error message '
-    'and leave `daily_menus` field empty. '
-    'Today is {date}.'
+    'Extract restaurant daily menus from the image. The text is in Czech or English language. '
+    'The input is either a screenshot of a webpage or a photo of a handwritten menu; it can contain spelling errors. '
+    'If the menus cannot be extracted, leave `daily_menus` field empty. '
 )
 
 
@@ -54,12 +53,15 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
                     temperature=0.0
                 ),
             )
-            assert isinstance(response.parsed, ParsedMenu)
+            if not isinstance(response.parsed, ParsedMenu):
+                err_msg = f'Unexpected response type: {type(response.parsed)}'
+                raise ValueError(err_msg)
+
             ok_results.append(OcrResult(id=site.id, data=response.parsed))
         except Exception as e:
             LOG.error(f'Failed to extract menu for {site.id}: {type(e)}:{e}')
             err_results.append(ErrorResult(id=site.id, error=str(e)))
-            continue
+
 
     return OcrTaskOutput(results=ok_results, errors=err_results, date=input.date)
 
