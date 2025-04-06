@@ -33,6 +33,18 @@ restaurants:
     url: "https://restaurant1.com/daily-menu"
 ```
 
+## Running the bot
+
+Example of running the bot's pipeline - it makes screenshots, performs OCR on them, and generates a summary:
+
+```
+python -m restabot.pipeline \
+    --sites data/restaurants.yaml \
+    --screenshots-dir data/screenshots \
+    --ocr-output data/parsed_menus.json \
+    --summary-output data/summary.md
+```
+
 ## Development
 
 For development, install additional dependencies:

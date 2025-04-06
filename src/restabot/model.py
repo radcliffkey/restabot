@@ -90,7 +90,7 @@ class ParsedMenu(BaseModel):
         description='List of languages detected in the text. Most likely languages are Czech and English. '
                     'Take the language into account when parsing the text.')
     daily_menus: list[DailyMenu] = Field(
-        description='List of menus for each day. It is possible that there is only one day mentioned.')
+        description='List of daily/weekly menus. If the text does not contain any menus, leave this field empty.')
 
 
 class OcrResult(BaseModel):
