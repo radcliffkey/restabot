@@ -41,9 +41,10 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
     prompt = get_ocr_prompt(input.date)
 
     for site in sites:
-        image = PIL.Image.open(input.in_dir / f'{site.id}.jpeg')
-        LOG.info(f'Running OCR for {site.id}')
         try:
+            image = PIL.Image.open(input.in_dir / f'{site.id}.jpeg')
+            LOG.info(f'Running OCR for {site.id}')
+
             response = await client.aio.models.generate_content(
                 model='gemini-2.0-flash',
                 contents=[image, prompt],
