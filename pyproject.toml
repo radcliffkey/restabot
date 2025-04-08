@@ -14,7 +14,7 @@ license = { file = "LICENSE" }
 requires-python = ">=3.10"
 dependencies = [
     "aiohttp~=3.11",
-    "google-genai~=1.8",
+    "google-genai~=1.9",
     "pillow~=11.1",
     "playwright~=1.51",
     "PyYAML~=6.0",

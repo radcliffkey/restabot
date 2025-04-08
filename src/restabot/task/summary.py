@@ -21,7 +21,7 @@ SUMMARY_PROMPT_TMPL = (
     'Please analyze the following restaurant menus and create a listing.'
     '- Select only menus for {date} ({day_of_week}). If the menu applies to the whole current week, include it.\n'
     '- Create a listing written in Czech language\n'
-    '- Do not omit any dishes, but correct spelling and duplicates\n'
+    '- Do not omit any dishes (ignore drinks), but correct spelling and duplicates\n'
     '- Arrange the information in common format:'
     ' <dish name and description, capitalized first letter, but not all caps> – <price> Kč. '
     'Omit the price if it is unknown.\n'

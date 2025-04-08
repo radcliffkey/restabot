@@ -88,7 +88,6 @@ async def slack_download_task(input: SlackDownloadTaskInput) -> SlackDownloadTas
             LOG.error(error_msg)
             err_results.append(ErrorResult(id=site.id, error=error_msg))
 
-
     return SlackDownloadTaskOutput(results=ok_results, errors=err_results)
 
 

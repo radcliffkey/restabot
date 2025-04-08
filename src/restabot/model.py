@@ -38,6 +38,7 @@ class ScreenshotTaskOutput(BaseModel):
     results: list[ScreenshotResult]
     errors: list[ErrorResult]
 
+
 class SlackDownloadTaskInput(BaseModel):
     site_config_file: Path
     out_dir: Path
@@ -58,6 +59,7 @@ class Dish(BaseModel):
 class SimpleDate(BaseModel):
     day: int
     month: int
+
 
 class DateRange(BaseModel):
     start: SimpleDate

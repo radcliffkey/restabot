@@ -63,7 +63,6 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
             LOG.error(f'Failed to extract menu for {site.id}: {type(e)}:{e}')
             err_results.append(ErrorResult(id=site.id, error=str(e)))
 
-
     return OcrTaskOutput(results=ok_results, errors=err_results, date=input.date)
 
 
