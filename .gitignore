@@ -164,9 +164,10 @@ cython_debug/
 .idea/
 *.iml
 
-# Cursor
+# VSCode/Cursor
 .cursorignore
 .cursor/
+.vscode/
 
 # Ruff stuff:
 .ruff_cache/

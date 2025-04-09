@@ -13,9 +13,9 @@ playwright install
 
 For the pipeline to run, you will need to set the following environment variables:
 
-- `GEMINI_API_KEY` - Google Gemini API key
-- `SLACK_BOT_TOKEN` - Token for posting to slack
-- `SLACK_CHANNEL_ID` - Slack channel to post to
+- `GEMINI_API_KEY` - Google Gemini API key - Gemini is used for OCR and summarization
+- `SLACK_BOT_TOKEN` - Token for posting to / downloading from Slack
+- `SLACK_CHANNEL_ID` - Optional Slack channel to post to
 
 If you store them in `.env` file, they will be automatically loaded.
 
@@ -30,7 +30,7 @@ restaurants:
     url: "https://restaurant1.com/daily-menu"
   - id: "restaurant2"
     name: "Restaurant 2"
-    url: "https://restaurant1.com/daily-menu"
+    url: "slack://channel_id"
 ```
 
 ## Running the bot
@@ -58,7 +58,7 @@ This includes:
 
 ### Core Components
 
-- `pipeline`: Orchestrates the entire menu fetching and processing pipeline
+- `pipeline`: Runs the entire menu fetching and processing pipeline
 - `model`: Contains data models and configuration schemas using Pydantic
 
 ### Task Modules
@@ -69,6 +69,7 @@ The `restabot.task` package contains specialized modules for different stages of
 - `ocr`: Performs optical character recognition on menu images
 - `summary`: Generates menu summaries using Google's Gemini AI
 - `slack_upload`: Handles posting the processed menus to Slack
+- `slack_download`: Limited support for dowloading menus from Slack - downloads the latest image posted to given channel
 
 ### Dependencies
 
