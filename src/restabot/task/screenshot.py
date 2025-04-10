@@ -1,8 +1,6 @@
 import argparse
 import asyncio
 import logging
-import typing
-from collections.abc import Awaitable, Callable, Iterable
 from pathlib import Path
 from typing import Literal
 
@@ -10,11 +8,25 @@ import yaml
 from playwright.async_api import async_playwright
 
 from restabot.model import ErrorResult, Restaurant, ScreenshotResult, ScreenshotTaskInput, ScreenshotTaskOutput
-
-R = typing.TypeVar('R')
-T = typing.TypeVar('T')
+from restabot.util import parallel_process
 
 LOG = logging.getLogger(f'{__package__}.screenshot')
+
+
+async def _accept_cookies(page, site):
+    cookie_accept_selectors = [
+        "button:has-text('Přijmout')",
+        "button:has-text('Consent')",
+        "button:has-text('Accept')",
+    ]
+    for selector in cookie_accept_selectors:
+        try:
+            if await page.locator(selector=selector).count() > 0:
+                LOG.info(f'{site.id} - Cookie selector matched: {selector}')
+                await page.locator(selector=selector).click()
+                break
+        except Exception:
+            continue
 
 
 async def screenshot_site(
@@ -31,20 +43,7 @@ async def screenshot_site(
         await page.goto(site.url)
         await page.wait_for_timeout(300)
 
-        cookie_accept_selectors = [
-            "button:has-text('Přijmout')",
-            "button:has-text('Consent')",
-            "button:has-text('Accept')",
-        ]
-
-        for selector in cookie_accept_selectors:
-            try:
-                if await page.locator(selector=selector).count() > 0:
-                    LOG.info(f'{site.id} - Cookie selector matched: {selector}')
-                    await page.locator(selector=selector).click()
-                    break
-            except:
-                continue
+        await _accept_cookies(page, site)
 
         await page.wait_for_timeout(200)
 
@@ -56,26 +55,21 @@ async def screenshot_site(
         return ScreenshotResult(id=site.id, path=out_file)
 
 
-async def parallel_process(
-        items: Iterable[T],
-        afunc: Callable[[T], Awaitable[R]],
-        max_concurrency: int
-) -> list[R | Exception]:
-    semaphore = asyncio.Semaphore(max_concurrency)
-    tasks = []
-
-    async def process_item_with_semaphore(item):
-        async with semaphore:
-            return await afunc(item)
-
-    for item in items:
-        task = asyncio.create_task(process_item_with_semaphore(item))
-        tasks.append(task)
-
-    return await asyncio.gather(*tasks, return_exceptions=True)
-
-
 async def screenshot_task(input: ScreenshotTaskInput) -> ScreenshotTaskOutput:
+    """
+    Takes screenshots of all the websites in the site configuration file.
+
+    The function takes a ScreenshotTaskInput object as an argument and returns a
+    ScreenshotTaskOutput object. It loads the site configuration from the file,
+    filters out non-http URLs, creates a directory for the screenshots if it
+    doesn't exist, and then takes the screenshots. The screenshots are saved in the directory
+    with the filename being the ID of the restaurant.
+
+    :param input: Input parameters for the task (config file, output directory,
+      image format, quality).
+    :return: The results of the task, containing the paths to the screenshots and
+      any errors that occurred.
+    """
     LOG.info(f'Running screenshot task with {input.model_dump()}')
 
     with input.site_config_file.open('rt', encoding='utf-8') as f:

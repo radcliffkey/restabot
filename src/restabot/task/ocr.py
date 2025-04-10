@@ -28,6 +28,15 @@ def get_ocr_prompt(date: datetime.date) -> str:
 
 
 async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
+    """
+    Run OCR on all the images in `input.in_dir` and return the extracted menus.
+
+    The function uses the Gemini API to perform the OCR. The API key is expected to be set in
+    the environment variable `GEMINI_API_KEY`.
+
+    :param input: Input parameters for the OCR task (config, input directory, date).
+    :return: An `OcrTaskOutput` object containing the extracted menus.
+    """
     with input.site_config_file.open('rt', encoding='utf-8') as f:
         site_data = yaml.safe_load(f)
 
