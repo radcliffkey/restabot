@@ -169,6 +169,8 @@ cython_debug/
 .cursor/
 .vscode/
 
+.qodo
+
 # Ruff stuff:
 .ruff_cache/
 

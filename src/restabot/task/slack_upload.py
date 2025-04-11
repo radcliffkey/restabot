@@ -15,6 +15,11 @@ LOG = logging.getLogger(f'{__package__}.slack_upload')
 
 
 async def slack_upload_task(input: SlackUploadTaskInput) -> SlackUploadTaskOutput:
+    """
+    Upload menu summary in Markdown format to Slack
+    :param input: task input (config, channel ID, summary file)
+    :return: output structure with optional error message
+    """
     with input.site_config_file.open('rt', encoding='utf-8') as f:
         yaml.safe_load(f)
 

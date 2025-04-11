@@ -43,6 +43,11 @@ def get_summary_prompt(date: datetime.date, menus: list[dict]) -> str:
 
 
 async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
+    """
+    Summarize the menus for given day from the OCR output.
+    :param input: task input (config, OCR output (contains date field))
+    :return: output structure with summary and date. The summary contains reasoning field for debug purposes.
+    """
     with input.site_config_file.open('rt', encoding='utf-8') as f:
         site_data = yaml.safe_load(f)
     restaurants = {r['id']: Restaurant.model_validate(r) for r in site_data['restaurants']}

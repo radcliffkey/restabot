@@ -51,7 +51,7 @@ async def test_parallel_process_with_exceptions():
     assert len(exceptions) == 2  # Failures for 1, 3
 
     assert all(isinstance(e, ValueError) for e in exceptions)
-    exception_messages = sorted([str(e) for e in exceptions])
+    exception_messages = [str(e) for e in exceptions]
     assert exception_messages == ["Failed for odd number 1", "Failed for odd number 3"]
 
 
@@ -62,7 +62,7 @@ async def test_parallel_process_all_fail():
     results = await parallel_process(items, _async_fail, max_concurrency=2)
     assert len(results) == len(items)
     assert all(isinstance(e, ValueError) for e in results)
-    exception_messages = sorted([str(e) for e in results])
+    exception_messages = [str(e) for e in results]
     assert exception_messages == ["Failed for 0", "Failed for 1", "Failed for 2"]
 
 
