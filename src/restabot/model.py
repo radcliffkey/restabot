@@ -23,12 +23,6 @@ class ScreenshotTaskInput(BaseModel):
     quality: int | None = None
 
 
-class OcrTaskInput(BaseModel):
-    site_config_file: Path
-    in_dir: Path
-    date: datetime.date = Field(default_factory=lambda: datetime.date.today())
-
-
 class ScreenshotResult(BaseModel):
     id: str
     path: Path
@@ -45,6 +39,12 @@ class SlackDownloadTaskInput(BaseModel):
 
 
 SlackDownloadTaskOutput = ScreenshotTaskOutput
+
+
+class OcrTaskInput(BaseModel):
+    site_config_file: Path
+    in_dir: Path
+    date: datetime.date = Field(default_factory=lambda: datetime.date.today())
 
 
 class Dish(BaseModel):
@@ -67,20 +67,25 @@ class DateRange(BaseModel):
 
 
 class DayOfWeek(BaseModel):
-    name: Literal['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] = Field(
+    day_name: Literal['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] = Field(
         description='Name of the day in English.'
     )
 
 
 class DailyMenu(BaseModel):
-    valid_for_text: str = Field(description='Time period for which the menu is valid as extracted from input text.')
+    valid_for_text: str | None = Field(
+        description='Day(s) for which the menu is valid. '
+                    'Do not include hours and minutes (HH:MM). '
+                    'Leave empty if the day(s) are not in the text.'
+    )
     valid_for: Union[SimpleDate, DateRange, DayOfWeek, Literal['whole_week']] = Field(
-        description='Time period for which the menu is valid. Depending on input text and menu type, '
+        description='Day(s) for which the menu is valid. '
+                    'Depending on input text and menu type, '
                     'this field will contain one of the following:\n'
                     '- date; parse `XX.YY` as `XX` = day and `YY` = month\n'
                     '- date range if the menu is weekly\n'
                     '- day of week\n'
-                    '- "whole_week" if the menu is weekly and the date range is not available'
+                    '- "whole_week" if the menu is weekly or the date range is not available'
     )
     dishes: list[Dish] = Field(
         description='List of dishes for the day/week. Leave empty if no dishes were provided. Do not include drinks.'
