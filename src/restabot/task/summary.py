@@ -15,11 +15,13 @@ from restabot.model import DailySummary, OcrTaskOutput, Restaurant, SummaryTaskI
 LOG = logging.getLogger(f'{__package__}.summary')
 
 # MODEL = 'gemini-2.5-pro-exp-03-25'
-MODEL = 'gemini-2.0-flash'
+MODEL = 'gemini-2.5-flash-preview-04-17'
+# MODEL = 'gemini-2.0-flash'
 
 SUMMARY_PROMPT_TMPL = (
     'Please analyze the following restaurant menus and create a listing.'
-    '- Select only menus for {date} ({day_of_week}). If the menu applies to the whole current week, include it.\n'
+    '- Select only menus for {date} ({day_of_week}). If the menu applies to the whole current week, include it.'
+    ' If the menu has no date info, include it.\n'
     '- Create a listing written in Czech language\n'
     '- Do not omit any dishes (ignore drinks), but correct spelling and duplicates\n'
     '- Arrange the information in common format:'

@@ -15,6 +15,8 @@ from restabot.model import ErrorResult, OcrResult, OcrTaskInput, OcrTaskOutput, 
 
 LOG = logging.getLogger(f'{__package__}.ocr')
 
+MODEL = 'gemini-2.5-flash-preview-04-17'
+# MODEL = 'gemini-2.0-flash'
 
 OCR_PROMPT_TMPL = (
     'Extract restaurant daily menus from the image. The texts are in Czech or English language. '
@@ -55,7 +57,7 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
             LOG.info(f'Running OCR for {site.id}')
 
             response = await client.aio.models.generate_content(
-                model='gemini-2.0-flash',
+                model=MODEL,
                 contents=[image, prompt],
                 config=GenerateContentConfig(
                     response_mime_type='application/json',

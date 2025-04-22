@@ -78,7 +78,7 @@ class DailyMenu(BaseModel):
                     'Do not include hours and minutes (HH:MM). '
                     'Leave empty if the day(s) are not in the text.'
     )
-    valid_for: Union[SimpleDate, DateRange, DayOfWeek, Literal['whole_week']] = Field(
+    valid_for: Union[SimpleDate, DateRange, DayOfWeek, Literal['whole_week']] | None = Field(
         description='Day(s) for which the menu is valid. '
                     'Depending on input text and menu type, '
                     'this field will contain one of the following:\n'
@@ -86,6 +86,7 @@ class DailyMenu(BaseModel):
                     '- date range if the menu is weekly\n'
                     '- day of week\n'
                     '- "whole_week" if the menu is weekly or the date range is not available'
+                    '- null if no date-related information is available'
     )
     dishes: list[Dish] = Field(
         description='List of dishes for the day/week. Leave empty if no dishes were provided. Do not include drinks.'
