@@ -15,7 +15,7 @@ from restabot.model import ErrorResult, OcrResult, OcrTaskInput, OcrTaskOutput, 
 
 LOG = logging.getLogger(f'{__package__}.ocr')
 
-MODEL = 'gemini-2.5-flash-preview-04-17'
+MODEL = 'gemini-2.5-flash-preview-05-20'
 # MODEL = 'gemini-2.0-flash'
 
 OCR_PROMPT_TMPL = (

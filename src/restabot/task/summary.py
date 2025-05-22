@@ -15,7 +15,7 @@ from restabot.model import DailySummary, OcrTaskOutput, Restaurant, SummaryTaskI
 LOG = logging.getLogger(f'{__package__}.summary')
 
 # MODEL = 'gemini-2.5-pro-exp-03-25'
-MODEL = 'gemini-2.5-flash-preview-04-17'
+MODEL = 'gemini-2.5-flash-preview-05-20'
 # MODEL = 'gemini-2.0-flash'
 
 SUMMARY_PROMPT_TMPL = (
