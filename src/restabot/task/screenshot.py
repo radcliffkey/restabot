@@ -38,10 +38,10 @@ async def screenshot_site(
     async with async_playwright() as pw:
 
         LOG.info(f'{site.id} - launching browser')
-        browser = await pw.chromium.launch()
+        browser = await pw.firefox.launch()
         page = await browser.new_page()
         await page.goto(site.url)
-        await page.wait_for_timeout(300)
+        await page.wait_for_timeout(400)
 
         await _accept_cookies(page, site)
 
