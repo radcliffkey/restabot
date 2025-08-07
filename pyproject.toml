@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "restabot"
-version = "1.0.1"
+version = "1.0.2"
 description = "Restaurant menu bot"
 authors = [
     { name = "Hufnagel Istvan", email = "pista@fnagel.hu" }
@@ -13,14 +13,14 @@ readme = {file = "README.md", content-type = "text/markdown"}
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
 dependencies = [
-    "aiohttp~=3.11",
-    "google-genai~=1.16",
-    "pillow~=11.1",
-    "playwright~=1.51",
+    "aiohttp~=3.12",
+    "google-genai~=1.29",
+    "pillow~=11.3",
+    "playwright~=1.54",
     "PyYAML~=6.0",
     "pydantic~=2.11",
     "python-dotenv~=1.1",
-    "slack-sdk~=3.35"
+    "slack-sdk~=3.36"
 ]
 
 [project.optional-dependencies]
