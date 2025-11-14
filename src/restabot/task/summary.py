@@ -14,9 +14,7 @@ from restabot.model import DailySummary, OcrTaskOutput, Restaurant, SummaryTaskI
 
 LOG = logging.getLogger(f'{__package__}.summary')
 
-# MODEL = 'gemini-2.5-pro-exp-03-25'
-MODEL = 'gemini-2.5-flash-preview-05-20'
-# MODEL = 'gemini-2.0-flash'
+MODEL = 'gemini-2.5-flash'
 
 SUMMARY_PROMPT_TMPL = (
     'Please analyze the following restaurant menus and create a listing.'
@@ -74,26 +72,29 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
     prompt = get_summary_prompt(ocr_output.date, menus)
 
     try:
-        response = await client.aio.models.generate_content(
-            model=MODEL,
-            contents=prompt,
-            config=GenerateContentConfig(
-                response_mime_type='application/json',
-                response_schema=DailySummary,
-                temperature=0.0
-            ),
-        )
-        if not isinstance(response.parsed, DailySummary):
-            LOG.error(f'Unexpected response type: {type(response.parsed)}, response: {response.model_dump_json()}')
-            raise ValueError('Unexpected response type')
+        async with client.aio:
+            response = await client.aio.models.generate_content(
+                model=MODEL,
+                contents=prompt,
+                config=GenerateContentConfig(
+                    response_mime_type='application/json',
+                    response_schema=DailySummary,
+                    temperature=0.0
+                ),
+            )
+            if not isinstance(response.parsed, DailySummary):
+                LOG.error(f'Unexpected response type: {type(response.parsed)}, response: {response.model_dump_json()}')
+                raise ValueError('Unexpected response type')
 
-        return SummaryTaskOutput(summary=response.parsed, date=ocr_output.date)
+            return SummaryTaskOutput(summary=response.parsed, date=ocr_output.date)
     except Exception as e:
         LOG.error(f'Failed to generate summary: {e}', exc_info=True)
         return SummaryTaskOutput(
             summary=DailySummary(text=f'Error generating summary: {str(e)}', reasoning=''),
             date=ocr_output.date
         )
+    finally:
+        client.close()
 
 
 async def main():

@@ -15,8 +15,7 @@ from restabot.model import ErrorResult, OcrResult, OcrTaskInput, OcrTaskOutput, 
 
 LOG = logging.getLogger(f'{__package__}.ocr')
 
-MODEL = 'gemini-2.5-flash-preview-05-20'
-# MODEL = 'gemini-2.0-flash'
+MODEL = 'gemini-2.5-flash'
 
 OCR_PROMPT_TMPL = (
     'Extract restaurant daily menus from the image. The texts are in Czech or English language. '
@@ -51,28 +50,32 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
 
     prompt = get_ocr_prompt(input.date)
 
-    for site in sites:
-        try:
-            image = PIL.Image.open(input.in_dir / f'{site.id}.jpeg')
-            LOG.info(f'Running OCR for {site.id}')
+    try:
+        async with client.aio:
+            for site in sites:
+                try:
+                    image = PIL.Image.open(input.in_dir / f'{site.id}.jpeg')
+                    LOG.info(f'Running OCR for {site.id}')
 
-            response = await client.aio.models.generate_content(
-                model=MODEL,
-                contents=[image, prompt],
-                config=GenerateContentConfig(
-                    response_mime_type='application/json',
-                    response_schema=ParsedMenu,
-                    temperature=0.0
-                ),
-            )
-            if not isinstance(response.parsed, ParsedMenu):
-                err_msg = f'Unexpected response type: {type(response.parsed)}'
-                raise ValueError(err_msg)
+                    response = await client.aio.models.generate_content(
+                        model=MODEL,
+                        contents=[image, prompt],
+                        config=GenerateContentConfig(
+                            response_mime_type='application/json',
+                            response_schema=ParsedMenu,
+                            temperature=0.0
+                        ),
+                    )
+                    if not isinstance(response.parsed, ParsedMenu):
+                        err_msg = f'Unexpected response type: {type(response.parsed)}'
+                        raise ValueError(err_msg)
 
-            ok_results.append(OcrResult(id=site.id, data=response.parsed))
-        except Exception as e:
-            LOG.error(f'Failed to extract menu for {site.id}: {type(e)}:{e}')
-            err_results.append(ErrorResult(id=site.id, error=str(e)))
+                    ok_results.append(OcrResult(id=site.id, data=response.parsed))
+                except Exception as e:
+                    LOG.error(f'Failed to extract menu for {site.id}: {type(e)}:{e}')
+                    err_results.append(ErrorResult(id=site.id, error=str(e)))
+    finally:
+        client.close()
 
     return OcrTaskOutput(results=ok_results, errors=err_results, date=input.date)
 
