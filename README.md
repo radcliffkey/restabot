@@ -4,7 +4,17 @@ Restabot is a Python application that automates the process of fetching and summ
 
 ## Installation
 
+### Using `uv` (recommended)
+
+```bash
+cd {restabot_repo_dir}
+uv sync
+uv run playwright install
 ```
+
+### Using pip
+
+```bash
 pip install {restabot_repo_dir}
 playwright install
 ```
@@ -37,8 +47,8 @@ restaurants:
 
 Example of running the bot's pipeline - it makes screenshots, performs OCR on them, and generates a summary:
 
-```
-python -m restabot.pipeline \
+```bash
+[uv run] python -m restabot.pipeline \
     --sites data/restaurants.yaml \
     --screenshots-dir data/screenshots \
     --ocr-output data/parsed_menus.json \
@@ -48,11 +58,19 @@ python -m restabot.pipeline \
 ## Development
 
 For development, install additional dependencies:
+
+```bash
+uv sync --extra dev
+```
+
+or
+
 ```bash
 pip install -e ".[dev]"
 ```
 
 This includes:
+
 - pytest for testing
 - flake8 for code style checking
 
@@ -74,6 +92,7 @@ The `restabot.task` package contains specialized modules for different stages of
 ### Dependencies
 
 Key dependencies include:
+
 - Playwright for web automation and screenshot capture
 - Google Gemini AI for menu text analysis and summarization
 - Slack SDK for posting results
