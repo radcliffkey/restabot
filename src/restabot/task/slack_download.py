@@ -27,6 +27,11 @@ async def _download_file(url: str, out_file: Path) -> None:
 
 
 async def slack_download_task(input: SlackDownloadTaskInput) -> SlackDownloadTaskOutput:
+    """
+    Download the last image from a Slack channel for restaurants configured with `slack://` URL.
+    :param input: task input (config, output directory)
+    :return: output structure with the paths to the downloaded images and any errors that occurred
+    """
     with input.site_config_file.open('rt', encoding='utf-8') as f:
         site_data = yaml.safe_load(f)
 

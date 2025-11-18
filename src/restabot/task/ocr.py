@@ -12,6 +12,7 @@ from google import genai
 from google.genai.types import GenerateContentConfig
 
 from restabot.model import ErrorResult, OcrResult, OcrTaskInput, OcrTaskOutput, ParsedMenu, Restaurant
+from restabot.util import retry_with_exponential_backoff
 
 LOG = logging.getLogger(f'{__package__}.ocr')
 
@@ -57,20 +58,23 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
                     image = PIL.Image.open(input.in_dir / f'{site.id}.jpeg')
                     LOG.info(f'Running OCR for {site.id}')
 
-                    response = await client.aio.models.generate_content(
-                        model=MODEL,
-                        contents=[image, prompt],
-                        config=GenerateContentConfig(
-                            response_mime_type='application/json',
-                            response_schema=ParsedMenu,
-                            temperature=0.0
-                        ),
-                    )
-                    if not isinstance(response.parsed, ParsedMenu):
-                        err_msg = f'Unexpected response type: {type(response.parsed)}'
-                        raise ValueError(err_msg)
+                    async def generate_content():
+                        response = await client.aio.models.generate_content(
+                            model=MODEL,
+                            contents=[image, prompt],
+                            config=GenerateContentConfig(
+                                response_mime_type='application/json',
+                                response_schema=ParsedMenu,
+                                temperature=0.0
+                            ),
+                        )
+                        if not isinstance(response.parsed, ParsedMenu):
+                            err_msg = f'Unexpected response type: {type(response.parsed)}'
+                            raise ValueError(err_msg)
+                        return response.parsed
 
-                    ok_results.append(OcrResult(id=site.id, data=response.parsed))
+                    parsed_menu = await retry_with_exponential_backoff(generate_content)
+                    ok_results.append(OcrResult(id=site.id, data=parsed_menu))
                 except Exception as e:
                     LOG.error(f'Failed to extract menu for {site.id}: {type(e)}:{e}')
                     err_results.append(ErrorResult(id=site.id, error=str(e)))
