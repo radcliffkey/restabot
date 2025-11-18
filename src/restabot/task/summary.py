@@ -11,6 +11,7 @@ from google import genai
 from google.genai.types import GenerateContentConfig
 
 from restabot.model import DailySummary, OcrTaskOutput, Restaurant, SummaryTaskInput, SummaryTaskOutput
+from restabot.util import retry_with_exponential_backoff
 
 LOG = logging.getLogger(f'{__package__}.summary')
 
@@ -73,20 +74,26 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
 
     try:
         async with client.aio:
-            response = await client.aio.models.generate_content(
-                model=MODEL,
-                contents=prompt,
-                config=GenerateContentConfig(
-                    response_mime_type='application/json',
-                    response_schema=DailySummary,
-                    temperature=0.0
-                ),
-            )
-            if not isinstance(response.parsed, DailySummary):
-                LOG.error(f'Unexpected response type: {type(response.parsed)}, response: {response.model_dump_json()}')
-                raise ValueError('Unexpected response type')
+            async def generate_content():
+                response = await client.aio.models.generate_content(
+                    model=MODEL,
+                    contents=prompt,
+                    config=GenerateContentConfig(
+                        response_mime_type='application/json',
+                        response_schema=DailySummary,
+                        temperature=0.0
+                    ),
+                )
+                if not isinstance(response.parsed, DailySummary):
+                    LOG.error(
+                        f'Unexpected response type: {type(response.parsed)}, '
+                        f'response: {response.model_dump_json()}'
+                    )
+                    raise ValueError('Unexpected response type')
+                return response.parsed
 
-            return SummaryTaskOutput(summary=response.parsed, date=ocr_output.date)
+            parsed_summary = await retry_with_exponential_backoff(generate_content)
+            return SummaryTaskOutput(summary=parsed_summary, date=ocr_output.date)
     except Exception as e:
         LOG.error(f'Failed to generate summary: {e}', exc_info=True)
         return SummaryTaskOutput(
