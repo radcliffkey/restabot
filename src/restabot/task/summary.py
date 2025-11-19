@@ -15,7 +15,7 @@ from restabot.util import retry_with_exponential_backoff
 
 LOG = logging.getLogger(f'{__package__}.summary')
 
-MODEL = 'gemini-2.5-flash'
+MODEL = 'gemini-flash-latest'
 
 SUMMARY_PROMPT_TMPL = (
     'Please analyze the following restaurant menus and create a listing.'

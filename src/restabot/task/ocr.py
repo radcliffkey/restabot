@@ -16,7 +16,7 @@ from restabot.util import retry_with_exponential_backoff
 
 LOG = logging.getLogger(f'{__package__}.ocr')
 
-MODEL = 'gemini-2.5-flash'
+MODEL = 'gemini-flash-latest'
 
 OCR_PROMPT_TMPL = (
     'Extract restaurant daily menus from the image. The texts are in Czech or English language. '
