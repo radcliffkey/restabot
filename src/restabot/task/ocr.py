@@ -9,14 +9,14 @@ import PIL.Image
 import yaml
 from dotenv import load_dotenv
 from google import genai
-from google.genai.types import GenerateContentConfig
+from google.genai.types import GenerateContentConfig, ThinkingConfig, ThinkingLevel
 
 from restabot.model import ErrorResult, OcrResult, OcrTaskInput, OcrTaskOutput, ParsedMenu, Restaurant
-from restabot.util import retry_with_exponential_backoff
+from restabot.util import parallel_process, retry_with_exponential_backoff
 
 LOG = logging.getLogger(f'{__package__}.ocr')
 
-MODEL = 'gemini-flash-latest'
+MODEL = 'gemini-3-flash-preview'
 
 OCR_PROMPT_TMPL = (
     'Extract restaurant daily menus from the image. The texts are in Czech or English language. '
@@ -46,40 +46,45 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
 
     client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
 
-    ok_results = []
-    err_results = []
-
     prompt = get_ocr_prompt(input.date)
+
+    async def process_site(site: Restaurant) -> OcrResult | ErrorResult:
+        try:
+            image = PIL.Image.open(input.in_dir / f'{site.id}.jpeg')
+            LOG.info(f'Running OCR for {site.id}')
+
+            async def generate_content():
+                response = await client.aio.models.generate_content(
+                    model=MODEL,
+                    contents=[image, prompt],
+                    config=GenerateContentConfig(
+                        response_mime_type='application/json',
+                        response_schema=ParsedMenu,
+                        temperature=0.0,
+                        thinking_config=ThinkingConfig(
+                            thinking_level=ThinkingLevel.MINIMAL
+                        )
+                    ),
+                )
+                if not isinstance(response.parsed, ParsedMenu):
+                    err_msg = f'Unexpected response type: {type(response.parsed)}'
+                    raise ValueError(err_msg)
+                return response.parsed
+
+            parsed_menu = await retry_with_exponential_backoff(generate_content)
+            return OcrResult(id=site.id, data=parsed_menu)
+        except Exception as e:
+            LOG.error(f'Failed to extract menu for {site.id}: {type(e)}:{e}')
+            return ErrorResult(id=site.id, error=str(e))
 
     try:
         async with client.aio:
-            for site in sites:
-                try:
-                    image = PIL.Image.open(input.in_dir / f'{site.id}.jpeg')
-                    LOG.info(f'Running OCR for {site.id}')
-
-                    async def generate_content():
-                        response = await client.aio.models.generate_content(
-                            model=MODEL,
-                            contents=[image, prompt],
-                            config=GenerateContentConfig(
-                                response_mime_type='application/json',
-                                response_schema=ParsedMenu,
-                                temperature=0.0
-                            ),
-                        )
-                        if not isinstance(response.parsed, ParsedMenu):
-                            err_msg = f'Unexpected response type: {type(response.parsed)}'
-                            raise ValueError(err_msg)
-                        return response.parsed
-
-                    parsed_menu = await retry_with_exponential_backoff(generate_content)
-                    ok_results.append(OcrResult(id=site.id, data=parsed_menu))
-                except Exception as e:
-                    LOG.error(f'Failed to extract menu for {site.id}: {type(e)}:{e}')
-                    err_results.append(ErrorResult(id=site.id, error=str(e)))
+            results = await parallel_process(sites, process_site, max_concurrency=10)
     finally:
         client.close()
+
+    ok_results = [r for r in results if isinstance(r, OcrResult)]
+    err_results = [r for r in results if isinstance(r, ErrorResult)]
 
     return OcrTaskOutput(results=ok_results, errors=err_results, date=input.date)
 

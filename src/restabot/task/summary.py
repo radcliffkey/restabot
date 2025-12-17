@@ -8,14 +8,14 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 from google import genai
-from google.genai.types import GenerateContentConfig
+from google.genai.types import GenerateContentConfig, ThinkingConfig, ThinkingLevel
 
 from restabot.model import DailySummary, OcrTaskOutput, Restaurant, SummaryTaskInput, SummaryTaskOutput
 from restabot.util import retry_with_exponential_backoff
 
 LOG = logging.getLogger(f'{__package__}.summary')
 
-MODEL = 'gemini-flash-latest'
+MODEL = 'gemini-3-flash-preview'
 
 SUMMARY_PROMPT_TMPL = (
     'Please analyze the following restaurant menus and create a listing.'
@@ -81,7 +81,10 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
                     config=GenerateContentConfig(
                         response_mime_type='application/json',
                         response_schema=DailySummary,
-                        temperature=0.0
+                        temperature=0.0,
+                        thinking_config=ThinkingConfig(
+                            thinking_level=ThinkingLevel.MINIMAL
+                        )
                     ),
                 )
                 if not isinstance(response.parsed, DailySummary):

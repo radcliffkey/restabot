@@ -92,7 +92,7 @@ async def screenshot_task(input: ScreenshotTaskInput) -> ScreenshotTaskOutput:
         except Exception as e:
             return ErrorResult(id=site.id, error=str(e))
 
-    results = await parallel_process(sites, make_screenshot, max_concurrency=5)
+    results = await parallel_process(sites, make_screenshot, max_concurrency=10)
     ok_results = []
     err_results = []
 

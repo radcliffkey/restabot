@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "restabot"
-version = "1.1.1"
+version = "1.2.0"
 description = "Restaurant menu bot"
 authors = [
     { name = "Hufnagel Istvan", email = "pista@fnagel.hu" }
@@ -14,7 +14,7 @@ license = { file = "LICENSE" }
 requires-python = ">=3.10"
 dependencies = [
     "aiohttp~=3.13",
-    "google-genai~=1.51",
+    "google-genai~=1.56",
     "pillow~=12.0",
     "playwright~=1.56",
     "PyYAML~=6.0",
