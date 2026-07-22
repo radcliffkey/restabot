@@ -28,7 +28,7 @@ SUMMARY_PROMPT_TMPL = (
     'Omit the price if it is unknown.\n'
     '- Prefix vegetarian dishes with 🌿 emoji.\n'
     '- Prefix non-vegetarian dishes with a suitable emoji for given dish. Be creative!\n'
-    '- Use Markdown format: headings, bullet points, etc.\n'
+    '- Use Markdown format: common H1 heading, H2 headings for restaurants, bullet points for dishes, etc.\n'
     'The input is in YAML format and was automatically extracted by OCR; it can contain errors.\n\n'
     'Restaurant menus:\n\n'
     '{menus}'
