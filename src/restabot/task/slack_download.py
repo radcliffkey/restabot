@@ -4,6 +4,7 @@ import datetime
 import logging
 import os
 from pathlib import Path
+from typing import Any, cast
 
 import aiohttp
 import yaml
@@ -48,8 +49,8 @@ async def slack_download_task(input: SlackDownloadTaskInput) -> SlackDownloadTas
 
     client = AsyncWebClient(token=os.getenv('SLACK_BOT_TOKEN'))
 
-    ok_results = []
-    err_results = []
+    ok_results: list[ScreenshotResult] = []
+    err_results: list[ErrorResult] = []
 
     for site in sites:
         channel_id = site.url.removeprefix('slack://')
@@ -57,9 +58,10 @@ async def slack_download_task(input: SlackDownloadTaskInput) -> SlackDownloadTas
             LOG.info(f'Downloading last image from Slack channel {channel_id}')
             now = int(datetime.datetime.now().timestamp())
             yesterday = now - 24 * 60 * 60
-            resp = await client.conversations_history(channel=channel_id, oldest=str(yesterday))
+            # slack_sdk stubs use **kwargs: Unknown on API methods
+            resp = await client.conversations_history(channel=channel_id, oldest=str(yesterday))  # pyright: ignore[reportUnknownMemberType]
 
-            messages = resp.get('messages') or []
+            messages = cast(list[dict[str, Any]], resp.get('messages') or [])
             if not messages:
                 error_msg = f'No messages found in channel {channel_id}'
                 LOG.error(error_msg)
@@ -67,9 +69,21 @@ async def slack_download_task(input: SlackDownloadTaskInput) -> SlackDownloadTas
                 continue
 
             file_msgs = [msg for msg in messages if 'files' in msg]
-            last_msg = max(file_msgs, key=lambda msg: msg['ts'])
+            if not file_msgs:
+                error_msg = f'No file messages found in channel {channel_id}'
+                LOG.error(error_msg)
+                err_results.append(ErrorResult(id=site.id, error=error_msg))
+                continue
 
-            download_url = last_msg['files'][0]['url_private_download']
+            last_msg = max(file_msgs, key=lambda msg: str(msg['ts']))
+            files = cast(list[dict[str, Any]], last_msg['files'])
+            if not files or 'url_private_download' not in files[0]:
+                error_msg = f'No downloadable file found in channel {channel_id}'
+                LOG.error(error_msg)
+                err_results.append(ErrorResult(id=site.id, error=error_msg))
+                continue
+
+            download_url = str(files[0]['url_private_download'])
             ext = download_url.split('.')[-1]
             if ext == 'jpg':
                 ext = 'jpeg'

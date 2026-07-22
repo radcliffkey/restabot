@@ -28,7 +28,8 @@ async def slack_upload_task(input: SlackUploadTaskInput) -> SlackUploadTaskOutpu
     client = AsyncWebClient(token=os.getenv('SLACK_BOT_TOKEN'))
 
     try:
-        await client.chat_postMessage(
+        # slack_sdk stubs use **kwargs: Unknown on API methods
+        await client.chat_postMessage(  # pyright: ignore[reportUnknownMemberType]
             channel=input.channel_id, text=summary_text, blocks=[{'type': 'markdown', 'text': summary_text}]
         )
         LOG.info(f'Successfully posted message to Slack channel {input.channel_id}')

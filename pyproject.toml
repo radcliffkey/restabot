@@ -62,7 +62,7 @@ quote-style = "single"
 
 [tool.basedpyright]
 include = ["src"]
-typeCheckingMode = "standard"
+typeCheckingMode = "strict"
 pythonVersion = "3.12"
 
 [tool.pytest.ini_options]
