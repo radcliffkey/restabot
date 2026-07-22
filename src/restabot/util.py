@@ -1,9 +1,6 @@
 import asyncio
 import logging
-from typing import Awaitable, Callable, Iterable, TypeVar
-
-R = TypeVar('R')
-T = TypeVar('T')
+from collections.abc import Awaitable, Callable, Iterable
 
 LOG = logging.getLogger(f'{__package__}.util')
 
@@ -12,7 +9,7 @@ INITIAL_RETRY_DELAY = 1.0
 RETRY_BACKOFF_MULTIPLIER = 2.0
 
 
-async def parallel_process(
+async def parallel_process[T, R](
         items: Iterable[T],
         afunc: Callable[[T], Awaitable[R]],
         max_concurrency: int
@@ -40,7 +37,7 @@ async def parallel_process(
     return await asyncio.gather(*tasks, return_exceptions=True)
 
 
-async def retry_with_exponential_backoff(
+async def retry_with_exponential_backoff[R](
         func: Callable[[], Awaitable[R]],
         max_retries: int = MAX_RETRIES,
         initial_delay: float = INITIAL_RETRY_DELAY,

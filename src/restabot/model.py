@@ -1,6 +1,6 @@
 import datetime
 from pathlib import Path
-from typing import Literal, Union
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -78,7 +78,7 @@ class DailyMenu(BaseModel):
                     'Do not include hours and minutes (HH:MM). '
                     'Leave empty if the day(s) are not in the text.'
     )
-    valid_for: Union[SimpleDate, DateRange, DayOfWeek, Literal['whole_week']] | None = Field(
+    valid_for: SimpleDate | DateRange | DayOfWeek | Literal['whole_week'] | None = Field(
         description='Day(s) for which the menu is valid. '
                     'Depending on input text and menu type, '
                     'this field will contain one of the following:\n'
