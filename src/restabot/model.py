@@ -50,7 +50,7 @@ class OcrTaskInput(BaseModel):
 class Dish(BaseModel):
     name: str = Field(description='Name of the dish in Czech language')
     description: str | None = Field(
-        description='Additional information about the dish (written in Czech or English).'
+        description='Additional information about the dish (written in Czech or English). '
         'Usually contains ingredients, English translation etc.'
     )
     is_vegetarian: bool = Field(description='Indicates if the dish is vegetarian. (Cheese is vegetarian.)')
@@ -86,7 +86,7 @@ class DailyMenu(BaseModel):
         '- date; parse `XX.YY` as `XX` = day and `YY` = month\n'
         '- date range if the menu is weekly\n'
         '- day of week\n'
-        '- "whole_week" if the menu is weekly or the date range is not available'
+        '- "whole_week" if the menu is weekly or the date range is not available\n'
         '- null if no date-related information is available'
     )
     dishes: list[Dish] = Field(
