@@ -61,9 +61,7 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
                         response_mime_type='application/json',
                         response_schema=ParsedMenu,
                         temperature=0.0,
-                        thinking_config=ThinkingConfig(
-                            thinking_level=ThinkingLevel.MEDIUM
-                        )
+                        thinking_config=ThinkingConfig(thinking_level=ThinkingLevel.MEDIUM),
                     ),
                 )
                 if not isinstance(response.parsed, ParsedMenu):
@@ -102,15 +100,12 @@ async def main():
     if not os.getenv('GEMINI_API_KEY'):
         raise ValueError('GEMINI_API_KEY is not set')
 
-    result = await ocr_task(OcrTaskInput(
-        site_config_file=Path(args.sites),
-        in_dir=Path(args.in_dir)
-    ))
+    result = await ocr_task(OcrTaskInput(site_config_file=Path(args.sites), in_dir=Path(args.in_dir)))
 
     out_file = Path(args.out_file).resolve()
     LOG.info(f'Writing output to {out_file}')
     Path(out_file).write_text(result.model_dump_json(indent=2), encoding='utf-8')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     asyncio.run(main())

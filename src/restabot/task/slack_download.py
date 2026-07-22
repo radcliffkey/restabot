@@ -108,10 +108,9 @@ async def main() -> None:
     if not os.getenv('SLACK_BOT_TOKEN'):
         raise ValueError('SLACK_BOT_TOKEN is not set')
 
-    result = await slack_download_task(SlackDownloadTaskInput(
-        site_config_file=Path(args.sites),
-        out_dir=Path(args.out_dir)
-    ))
+    result = await slack_download_task(
+        SlackDownloadTaskInput(site_config_file=Path(args.sites), out_dir=Path(args.out_dir))
+    )
 
     print(result.model_dump_json(indent=2))
 

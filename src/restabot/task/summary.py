@@ -57,22 +57,22 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
     menus = []
     for result in ocr_output.results:
         restaurant = restaurants[result.id]
-        menus.append({
-            'name': restaurant.name,
-            'menus': result.data.model_dump()['daily_menus'],
-        })
+        menus.append(
+            {
+                'name': restaurant.name,
+                'menus': result.data.model_dump()['daily_menus'],
+            }
+        )
 
     if not menus:
-        return SummaryTaskOutput(
-            summary=DailySummary(text='No menus available for analysis.'),
-            date=ocr_output.date
-        )
+        return SummaryTaskOutput(summary=DailySummary(text='No menus available for analysis.'), date=ocr_output.date)
 
     client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
     prompt = get_summary_prompt(ocr_output.date, menus)
 
     try:
         async with client.aio:
+
             async def generate_content():
                 response = await client.aio.models.generate_content(
                     model=MODEL,
@@ -81,15 +81,12 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
                         response_mime_type='application/json',
                         response_schema=DailySummary,
                         temperature=0.0,
-                        thinking_config=ThinkingConfig(
-                            thinking_level=ThinkingLevel.MEDIUM
-                        )
+                        thinking_config=ThinkingConfig(thinking_level=ThinkingLevel.MEDIUM),
                     ),
                 )
                 if not isinstance(response.parsed, DailySummary):
                     LOG.error(
-                        f'Unexpected response type: {type(response.parsed)}, '
-                        f'response: {response.model_dump_json()}'
+                        f'Unexpected response type: {type(response.parsed)}, response: {response.model_dump_json()}'
                     )
                     raise ValueError('Unexpected response type')
                 return response.parsed
@@ -98,10 +95,7 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
             return SummaryTaskOutput(summary=parsed_summary, date=ocr_output.date)
     except Exception as e:
         LOG.error(f'Failed to generate summary: {e}', exc_info=True)
-        return SummaryTaskOutput(
-            summary=DailySummary(text=f'Error generating summary: {str(e)}'),
-            date=ocr_output.date
-        )
+        return SummaryTaskOutput(summary=DailySummary(text=f'Error generating summary: {str(e)}'), date=ocr_output.date)
     finally:
         client.close()
 
@@ -119,15 +113,14 @@ async def main():
     if not os.getenv('GEMINI_API_KEY'):
         raise ValueError('GEMINI_API_KEY is not set')
 
-    result = await summary_task(SummaryTaskInput(
-        site_config_file=Path(args.sites),
-        ocr_output_file=Path(args.ocr_output)
-    ))
+    result = await summary_task(
+        SummaryTaskInput(site_config_file=Path(args.sites), ocr_output_file=Path(args.ocr_output))
+    )
 
     out_file = Path(args.out_file).resolve()
     LOG.info(f'Writing output to {out_file}')
     Path(out_file).write_text(result.summary.text, encoding='utf-8')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     asyncio.run(main())

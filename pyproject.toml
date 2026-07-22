@@ -25,21 +25,39 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "flake8~=7.3",
-    "flake8-pyproject~=1.2",
     "pytest~=9.1",
-    "pytest-asyncio~=1.4"
+    "pytest-asyncio~=1.4",
+    "ruff~=0.15"
 ]
 
 [tool.setuptools.dynamic]
 readme = {file = "README.md", content-type = "text/markdown"}
 
-[tool.flake8]
-max-line-length = 120
-import-order-style = "edited"
-min_python_version = "3.12.0"
-extend-ignore = ["W503"]
+[tool.ruff]
+line-length = 120
+target-version = "py312"
 exclude = [".git", "__pycache__", "build", "dist"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "B",   # flake8-bugbear
+    "N",   # pep8-naming
+    "I",   # isort
+    "UP",  # pyupgrade
+    "Q",   # flake8-quotes
+]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+
+[tool.ruff.lint.isort]
+known-first-party = ["restabot"]
+
+[tool.ruff.format]
+quote-style = "single"
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"

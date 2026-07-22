@@ -10,9 +10,7 @@ RETRY_BACKOFF_MULTIPLIER = 2.0
 
 
 async def parallel_process[T, R](
-        items: Iterable[T],
-        afunc: Callable[[T], Awaitable[R]],
-        max_concurrency: int
+    items: Iterable[T], afunc: Callable[[T], Awaitable[R]], max_concurrency: int
 ) -> list[R | Exception]:
     """
     Asynchronously process a collection of items with a specified concurrency limit.
@@ -38,10 +36,10 @@ async def parallel_process[T, R](
 
 
 async def retry_with_exponential_backoff[R](
-        func: Callable[[], Awaitable[R]],
-        max_retries: int = MAX_RETRIES,
-        initial_delay: float = INITIAL_RETRY_DELAY,
-        backoff_multiplier: float = RETRY_BACKOFF_MULTIPLIER,
+    func: Callable[[], Awaitable[R]],
+    max_retries: int = MAX_RETRIES,
+    initial_delay: float = INITIAL_RETRY_DELAY,
+    backoff_multiplier: float = RETRY_BACKOFF_MULTIPLIER,
 ) -> R:
     """
     Retry an async function with exponential backoff.

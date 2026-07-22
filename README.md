@@ -72,7 +72,7 @@ pip install -e ".[dev]"
 This includes:
 
 - pytest for testing
-- flake8 for code style checking
+- ruff for linting and formatting
 
 ### Core Components
 

@@ -27,22 +27,15 @@ async def run_pipeline(
         date = datetime.date.today()
 
     LOG.info('Taking screenshots...')
-    screenshot_result = await screenshot_task(ScreenshotTaskInput(
-        site_config_file=site_config_file,
-        out_dir=screenshots_dir,
-        format='jpeg',
-        quality=90
-    ))
+    screenshot_result = await screenshot_task(
+        ScreenshotTaskInput(site_config_file=site_config_file, out_dir=screenshots_dir, format='jpeg', quality=90)
+    )
 
     if screenshot_result.errors:
         LOG.warning(f'Screenshot errors: {screenshot_result.errors}')
 
     LOG.info('Running OCR...')
-    ocr_result = await ocr_task(OcrTaskInput(
-        site_config_file=site_config_file,
-        in_dir=screenshots_dir,
-        date=date
-    ))
+    ocr_result = await ocr_task(OcrTaskInput(site_config_file=site_config_file, in_dir=screenshots_dir, date=date))
 
     if ocr_result.errors:
         LOG.warning(f'OCR errors: {ocr_result.errors}')
@@ -50,10 +43,9 @@ async def run_pipeline(
     ocr_output_file.write_text(ocr_result.model_dump_json(indent=2), encoding='utf-8')
 
     LOG.info('Generating summary...')
-    summary_result = await summary_task(SummaryTaskInput(
-        site_config_file=site_config_file,
-        ocr_output_file=ocr_output_file
-    ))
+    summary_result = await summary_task(
+        SummaryTaskInput(site_config_file=site_config_file, ocr_output_file=ocr_output_file)
+    )
 
     summary_output_file.write_text(summary_result.summary.text, encoding='utf-8')
     LOG.info(f'Summary saved to {summary_output_file}')
@@ -83,7 +75,7 @@ async def main():
         screenshots_dir=Path(args.screenshots_dir),
         ocr_output_file=Path(args.ocr_output),
         summary_output_file=Path(args.summary_output),
-        date=date
+        date=date,
     )
 
 

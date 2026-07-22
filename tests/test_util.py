@@ -1,7 +1,8 @@
 import asyncio
 import time
-import pytest
 from typing import NoReturn
+
+import pytest
 
 from restabot.util import parallel_process
 
@@ -15,7 +16,7 @@ async def _async_square(n: int) -> int:
 async def _async_fail(n: int) -> NoReturn:
     """Simple async function that always raises an exception."""
     await asyncio.sleep(0.01)
-    raise ValueError(f"Failed for {n}")
+    raise ValueError(f'Failed for {n}')
 
 
 async def _async_square_or_fail(n: int) -> int:
@@ -24,7 +25,7 @@ async def _async_square_or_fail(n: int) -> int:
     if n % 2 == 0:
         return n * n
     else:
-        raise ValueError(f"Failed for odd number {n}")
+        raise ValueError(f'Failed for odd number {n}')
 
 
 @pytest.mark.asyncio
@@ -52,7 +53,7 @@ async def test_parallel_process_with_exceptions():
 
     assert all(isinstance(e, ValueError) for e in exceptions)
     exception_messages = [str(e) for e in exceptions]
-    assert exception_messages == ["Failed for odd number 1", "Failed for odd number 3"]
+    assert exception_messages == ['Failed for odd number 1', 'Failed for odd number 3']
 
 
 @pytest.mark.asyncio
@@ -63,7 +64,7 @@ async def test_parallel_process_all_fail():
     assert len(results) == len(items)
     assert all(isinstance(e, ValueError) for e in results)
     exception_messages = [str(e) for e in results]
-    assert exception_messages == ["Failed for 0", "Failed for 1", "Failed for 2"]
+    assert exception_messages == ['Failed for 0', 'Failed for 1', 'Failed for 2']
 
 
 @pytest.mark.asyncio
