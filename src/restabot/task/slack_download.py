@@ -52,20 +52,21 @@ async def slack_download_task(input: SlackDownloadTaskInput) -> SlackDownloadTas
     err_results = []
 
     for site in sites:
+        channel_id = site.url.removeprefix('slack://')
         try:
-            channel_id = site.url.removeprefix('slack://')
             LOG.info(f'Downloading last image from Slack channel {channel_id}')
             now = int(datetime.datetime.now().timestamp())
             yesterday = now - 24 * 60 * 60
-            resp = await client.conversations_history(channel=channel_id, oldest=yesterday)
+            resp = await client.conversations_history(channel=channel_id, oldest=str(yesterday))
 
-            if 'messages' not in resp or not resp['messages']:
+            messages = resp.get('messages') or []
+            if not messages:
                 error_msg = f'No messages found in channel {channel_id}'
                 LOG.error(error_msg)
                 err_results.append(ErrorResult(id=site.id, error=error_msg))
                 continue
 
-            file_msgs = [msg for msg in resp['messages'] if 'files' in msg]
+            file_msgs = [msg for msg in messages if 'files' in msg]
             last_msg = max(file_msgs, key=lambda msg: msg['ts'])
 
             download_url = last_msg['files'][0]['url_private_download']

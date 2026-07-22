@@ -25,6 +25,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "basedpyright~=1.39",
     "pytest~=9.1",
     "pytest-asyncio~=1.4",
     "ruff~=0.15"
@@ -58,6 +59,11 @@ known-first-party = ["restabot"]
 
 [tool.ruff.format]
 quote-style = "single"
+
+[tool.basedpyright]
+include = ["src"]
+typeCheckingMode = "standard"
+pythonVersion = "3.12"
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
