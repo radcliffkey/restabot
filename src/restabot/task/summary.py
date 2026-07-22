@@ -15,7 +15,7 @@ from restabot.util import retry_with_exponential_backoff
 
 LOG = logging.getLogger(f'{__package__}.summary')
 
-MODEL = 'gemini-3-flash-preview'
+MODEL = 'gemini-3.5-flash-lite'
 
 SUMMARY_PROMPT_TMPL = (
     'Please analyze the following restaurant menus and create a listing.'
@@ -24,12 +24,11 @@ SUMMARY_PROMPT_TMPL = (
     '- Create a listing written in Czech language\n'
     '- Do not omit any dishes (ignore drinks), but correct spelling and duplicates\n'
     '- Arrange the information in common format:'
-    ' <dish name and description, capitalized first letter, but not all caps> – <price> Kč. '
+    ' {{dish name with capitalized first letter, but not all caps}} ({{side dishes and description}}) – {{price}} Kč. '
     'Omit the price if it is unknown.\n'
     '- Prefix vegetarian dishes with 🌿 emoji.\n'
     '- Prefix non-vegetarian dishes with a suitable emoji for given dish. Be creative!\n'
     '- Use Markdown format: headings, bullet points, etc.\n'
-    'Use `reasoning` field for planning and step-by-step reasoning. '
     'The input is in YAML format and was automatically extracted by OCR; it can contain errors.\n\n'
     'Restaurant menus:\n\n'
     '{menus}'
@@ -47,7 +46,7 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
     """
     Summarize the menus for given day from the OCR output.
     :param input: task input (config, OCR output (contains date field))
-    :return: output structure with summary and date. The summary contains reasoning field for debug purposes.
+    :return: output structure with summary and date.
     """
     with input.site_config_file.open('rt', encoding='utf-8') as f:
         site_data = yaml.safe_load(f)
@@ -65,7 +64,7 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
 
     if not menus:
         return SummaryTaskOutput(
-            summary=DailySummary(text='No menus available for analysis.', reasoning=''),
+            summary=DailySummary(text='No menus available for analysis.'),
             date=ocr_output.date
         )
 
@@ -83,7 +82,7 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
                         response_schema=DailySummary,
                         temperature=0.0,
                         thinking_config=ThinkingConfig(
-                            thinking_level=ThinkingLevel.MINIMAL
+                            thinking_level=ThinkingLevel.MEDIUM
                         )
                     ),
                 )
@@ -100,7 +99,7 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
     except Exception as e:
         LOG.error(f'Failed to generate summary: {e}', exc_info=True)
         return SummaryTaskOutput(
-            summary=DailySummary(text=f'Error generating summary: {str(e)}', reasoning=''),
+            summary=DailySummary(text=f'Error generating summary: {str(e)}'),
             date=ocr_output.date
         )
     finally:
@@ -126,7 +125,6 @@ async def main():
     ))
 
     out_file = Path(args.out_file).resolve()
-    LOG.info(f'Thinking:\n{result.summary.reasoning}')
     LOG.info(f'Writing output to {out_file}')
     Path(out_file).write_text(result.summary.text, encoding='utf-8')
 
