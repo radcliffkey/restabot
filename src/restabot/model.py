@@ -50,8 +50,9 @@ class OcrTaskInput(BaseModel):
 class Dish(BaseModel):
     name: str = Field(description='Name of the dish in Czech language')
     description: str | None = Field(
-        description='Additional information about the dish (written in Czech or English).'
-                    'Usually contains ingredients, English translation etc.')
+        description='Additional information about the dish (written in Czech or English). '
+        'Usually contains ingredients, English translation etc.'
+    )
     is_vegetarian: bool = Field(description='Indicates if the dish is vegetarian. (Cheese is vegetarian.)')
     price: int | None = Field(description='Price of the dish in local currency.')
 
@@ -75,18 +76,18 @@ class DayOfWeek(BaseModel):
 class DailyMenu(BaseModel):
     valid_for_text: str | None = Field(
         description='Day(s) for which the menu is valid. '
-                    'Do not include hours and minutes (HH:MM). '
-                    'Leave empty if the day(s) are not in the text.'
+        'Do not include hours and minutes (HH:MM). '
+        'Leave empty if the day(s) are not in the text.'
     )
     valid_for: SimpleDate | DateRange | DayOfWeek | Literal['whole_week'] | None = Field(
         description='Day(s) for which the menu is valid. '
-                    'Depending on input text and menu type, '
-                    'this field will contain one of the following:\n'
-                    '- date; parse `XX.YY` as `XX` = day and `YY` = month\n'
-                    '- date range if the menu is weekly\n'
-                    '- day of week\n'
-                    '- "whole_week" if the menu is weekly or the date range is not available'
-                    '- null if no date-related information is available'
+        'Depending on input text and menu type, '
+        'this field will contain one of the following:\n'
+        '- date; parse `XX.YY` as `XX` = day and `YY` = month\n'
+        '- date range if the menu is weekly\n'
+        '- day of week\n'
+        '- "whole_week" if the menu is weekly or the date range is not available\n'
+        '- null if no date-related information is available'
     )
     dishes: list[Dish] = Field(
         description='List of dishes for the day/week. Leave empty if no dishes were provided. Do not include drinks.'
@@ -96,9 +97,11 @@ class DailyMenu(BaseModel):
 class ParsedMenu(BaseModel):
     languages: list[str] = Field(
         description='List of languages detected in the text. Most likely languages are Czech and English. '
-                    'Take the language into account when parsing the text.')
+        'Take the language into account when parsing the text.'
+    )
     daily_menus: list[DailyMenu] = Field(
-        description='List of daily/weekly menus. If the text does not contain any menus, leave this field empty.')
+        description='List of daily/weekly menus. If the text does not contain any menus, leave this field empty.'
+    )
 
 
 class OcrResult(BaseModel):

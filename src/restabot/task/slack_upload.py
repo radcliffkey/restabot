@@ -29,11 +29,7 @@ async def slack_upload_task(input: SlackUploadTaskInput) -> SlackUploadTaskOutpu
 
     try:
         await client.chat_postMessage(
-            channel=input.channel_id,
-            text=summary_text,
-            blocks=[
-                {'type': 'markdown', 'text': summary_text}
-            ]
+            channel=input.channel_id, text=summary_text, blocks=[{'type': 'markdown', 'text': summary_text}]
         )
         LOG.info(f'Successfully posted message to Slack channel {input.channel_id}')
         return SlackUploadTaskOutput(error=None)
@@ -55,7 +51,7 @@ async def main() -> None:
     parser.add_argument('--summary-file', required=True, help='Path to the daily menu summary file to upload')
     parser.add_argument(
         '--channel-id',
-        help='Slack channel ID to post to. If not provided, the SLACK_CHANNEL_ID environment variable will be used.'
+        help='Slack channel ID to post to. If not provided, the SLACK_CHANNEL_ID environment variable will be used.',
     )
     args = parser.parse_args()
 
@@ -71,11 +67,11 @@ async def main() -> None:
         )
         exit(1)
 
-    result = await slack_upload_task(SlackUploadTaskInput(
-        site_config_file=Path(args.sites),
-        channel_id=channel_id,
-        summary_file=Path(args.summary_file)
-    ))
+    result = await slack_upload_task(
+        SlackUploadTaskInput(
+            site_config_file=Path(args.sites), channel_id=channel_id, summary_file=Path(args.summary_file)
+        )
+    )
 
     if result.error:
         LOG.error(f'Failed to upload to Slack: {result.error}')

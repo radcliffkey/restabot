@@ -30,13 +30,9 @@ async def _accept_cookies(page, site):
 
 
 async def screenshot_site(
-        site: Restaurant,
-        out_dir: Path,
-        format: Literal['jpeg', 'png'] | None = None,
-        quality: int | None = None
+    site: Restaurant, out_dir: Path, format: Literal['jpeg', 'png'] | None = None, quality: int | None = None
 ) -> ScreenshotResult:
     async with async_playwright() as pw:
-
         LOG.info(f'{site.id} - launching browser')
         browser = await pw.firefox.launch()
         page = await browser.new_page()
@@ -113,21 +109,22 @@ async def main():
     parser.add_argument('--out-dir', required=True, help='Path to output directory')
     parser.add_argument('--out-format', choices=['jpeg', 'png'], default='png', help='Format of the output image')
     parser.add_argument(
-        '--jpeg-quality', type=int,
-        help='Quality of the output image (1-100). Applied only if out-format is jpeg'
+        '--jpeg-quality', type=int, help='Quality of the output image (1-100). Applied only if out-format is jpeg'
     )
 
     args = parser.parse_args()
 
-    result = await screenshot_task(ScreenshotTaskInput(
-        site_config_file=Path(args.sites),
-        out_dir=Path(args.out_dir),
-        format=args.out_format,
-        quality=args.jpeg_quality
-    ))
+    result = await screenshot_task(
+        ScreenshotTaskInput(
+            site_config_file=Path(args.sites),
+            out_dir=Path(args.out_dir),
+            format=args.out_format,
+            quality=args.jpeg_quality,
+        )
+    )
 
     print(result.model_dump_json(indent=2))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     asyncio.run(main())
