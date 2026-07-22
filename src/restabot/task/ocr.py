@@ -16,7 +16,7 @@ from restabot.util import parallel_process, retry_with_exponential_backoff
 
 LOG = logging.getLogger(f'{__package__}.ocr')
 
-MODEL = 'gemini-3-flash-preview'
+MODEL = 'gemini-3.5-flash-lite'
 
 OCR_PROMPT_TMPL = (
     'Extract restaurant daily menus from the image. The texts are in Czech or English language. '
@@ -62,7 +62,7 @@ async def ocr_task(input: OcrTaskInput) -> OcrTaskOutput:
                         response_schema=ParsedMenu,
                         temperature=0.0,
                         thinking_config=ThinkingConfig(
-                            thinking_level=ThinkingLevel.MINIMAL
+                            thinking_level=ThinkingLevel.MEDIUM
                         )
                     ),
                 )
