@@ -35,7 +35,7 @@ SUMMARY_PROMPT_TMPL = (
 )
 
 
-def get_summary_prompt(date: datetime.date, menus: list[dict]) -> str:
+def get_summary_prompt(date: datetime.date, menus: list[dict[str, object]]) -> str:
     day_of_week = date.strftime('%A')  # Get full day name in English
 
     menus_text = '\n\n'.join(yaml.dump(menu, indent=2, allow_unicode=True, sort_keys=False) for menu in menus)
@@ -54,7 +54,7 @@ async def summary_task(input: SummaryTaskInput) -> SummaryTaskOutput:
 
     ocr_output = OcrTaskOutput.model_validate_json(input.ocr_output_file.read_text(encoding='utf-8'))
 
-    menus = []
+    menus: list[dict[str, object]] = []
     for result in ocr_output.results:
         restaurant = restaurants[result.id]
         menus.append(

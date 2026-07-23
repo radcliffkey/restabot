@@ -11,7 +11,7 @@ RETRY_BACKOFF_MULTIPLIER = 2.0
 
 async def parallel_process[T, R](
     items: Iterable[T], afunc: Callable[[T], Awaitable[R]], max_concurrency: int
-) -> list[R | Exception]:
+) -> list[R | BaseException]:
     """
     Asynchronously process a collection of items with a specified concurrency limit.
 
@@ -22,17 +22,13 @@ async def parallel_process[T, R](
              The order of results corresponds to the order of the input items.
     """
     semaphore = asyncio.Semaphore(max_concurrency)
-    tasks = []
 
-    async def process_item_with_semaphore(item):
+    async def process_item_with_semaphore(item: T) -> R:
         async with semaphore:
             return await afunc(item)
 
-    for item in items:
-        task = asyncio.create_task(process_item_with_semaphore(item))
-        tasks.append(task)
-
-    return await asyncio.gather(*tasks, return_exceptions=True)
+    tasks = [asyncio.create_task(process_item_with_semaphore(item)) for item in items]
+    return list(await asyncio.gather(*tasks, return_exceptions=True))
 
 
 async def retry_with_exponential_backoff[R](

@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Literal
 
 import yaml
-from playwright.async_api import async_playwright
+from playwright.async_api import Page, async_playwright
 
 from restabot.model import ErrorResult, Restaurant, ScreenshotResult, ScreenshotTaskInput, ScreenshotTaskOutput
 from restabot.util import parallel_process
@@ -13,7 +13,7 @@ from restabot.util import parallel_process
 LOG = logging.getLogger(f'{__package__}.screenshot')
 
 
-async def _accept_cookies(page, site):
+async def _accept_cookies(page: Page, site: Restaurant) -> None:
     cookie_accept_selectors = [
         "button:has-text('Přijmout')",
         "button:has-text('Consent')",
@@ -82,15 +82,15 @@ async def screenshot_task(input: ScreenshotTaskInput) -> ScreenshotTaskOutput:
 
     out_dir = out_dir.resolve()
 
-    async def make_screenshot(site):
+    async def make_screenshot(site: Restaurant) -> ScreenshotResult | ErrorResult:
         try:
             return await screenshot_site(site, out_dir=out_dir, format=input.format, quality=input.quality)
         except Exception as e:
             return ErrorResult(id=site.id, error=str(e))
 
     results = await parallel_process(sites, make_screenshot, max_concurrency=10)
-    ok_results = []
-    err_results = []
+    ok_results: list[ScreenshotResult] = []
+    err_results: list[ErrorResult] = []
 
     for result in results:
         if isinstance(result, ScreenshotResult):

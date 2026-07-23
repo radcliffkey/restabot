@@ -73,6 +73,16 @@ This includes:
 
 - pytest for testing
 - ruff for linting and formatting
+- basedpyright for typechecking
+
+Run the full check with:
+
+```bash
+uv run ruff format --check src/ tests/
+uv run ruff check src/ tests/
+uv run basedpyright
+uv run pytest
+```
 
 ### Core Components
 
